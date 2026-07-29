@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Podium Fantasy Fórmula 1</title>
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0b0e11">
+
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --f1-turquesa: #00d2be;
+            --f1-papaya: #ff8700;
+            --f1-bg: #0b0e11;
+            --f1-card: #1c2025;
+            --f1-modal-bg: #161a1e;
+            --white: #ffffff;
+        }
+
+        body {
+            background-color: var(--f1-bg);
+            color: var(--white);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 10px;
+            padding-bottom: 70px; /* Espacio para la barra inferior en móviles */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ENCABEZADO SUPERIOR CON PERFIL */
+        .app-header {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--f1-card);
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border-bottom: 3px solid var(--f1-papaya);
+        }
+
+        .app-title {
+            font-weight: 900;
+            font-size: 1.1em;
+            color: var(--f1-papaya);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* BOTÓN DE PERFIL (ICONO TURQUESA) */
+        .profile-btn {
+            background: #2a2f36;
+            border: 2px solid var(--f1-turquesa);
+            color: var(--f1-turquesa);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: 0.2s;
+        }
+        .profile-btn:hover { background: var(--f1-turquesa); color: black; }
+
+        /* MODAL DE PERFIL FLOTANTE */
+        #auth-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: var(--f1-modal-bg);
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 350px;
+            border: 2px solid var(--f1-turquesa);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+        }
+
+        /* CONTENEDOR DE VISTAS */
+        .view-section {
+            width: 100%;
+            max-width: 600px;
+            display: none;
+        }
+        .view-section.active { display: block; }
+
+        /* TARJETAS Y FORMULARIOS */
+        .card-box {
+            background: var(--f1-card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            margin-bottom: 15px;
+        }
+
+        label { display: block; font-size: 0.7em; color: #a0a0a0; margin-top: 12px; text-transform: uppercase; font-weight: bold; }
+        select, input {
+            width: 100%; padding: 12px; margin-top: 5px; background: #2a2f36;
+            border: 1px solid #3e444d; color: white; border-radius: 6px;
+            box-sizing: border-box; font-size: 0.9em;
+        }
+
+        .btn-action {
+            width: 100%; padding: 14px; margin-top: 15px;
+            background: var(--f1-papaya); color: #000;
+            border: none; border-radius: 6px; font-weight: 800;
+            cursor: pointer; transition: 0.3s; text-transform: uppercase;
+        }
+        .btn-action:hover { opacity: 0.9; transform: scale(1.01); }
+        .btn-turquesa { background: var(--f1-turquesa); color: #000; }
+
+        /* BARRA DE NAVEGACIÓN INFERIOR (ESTILO APP MÓVIL) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: #14181c;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 2px solid #2a2f36;
+            z-index: 900;
+        }
+        .nav-item {
+            background: none; border: none; color: #808080;
+            font-size: 0.7em; text-transform: uppercase; font-weight: bold;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .nav-item span { font-size: 1.4em; }
+        .nav-item.active { color: var(--f1-turquesa); }
+
+        /* TABLA DE STANDINGS */
+        .standing-table {
+            width: 100%; border-collapse: collapse; background: var(--f1-card);
+            border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .standing-table tr { border-bottom: 1px solid #2a2f36; }
+        .standing-table td { padding: 12px; text-align: center; }
+        .points-badge {
+            background: var(--f1-turquesa); color: black; font-weight: bold;
+            padding: 4px 10px; border-radius: 4px; font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ENCABEZADO SUPERIOR -->
+    <header class="app-header">
+        <div class="app-title">Podium Fantasy F1</div>
+        <button class="profile-btn" onclick="toggleModalAuth()">👤</button>
+    </header>
+
+    <!-- MODAL DE ACCESO / USUARIO -->
+    <div id="auth-modal">
+        <div class="modal-content">
+            <h3 style="color: var(--f1-papaya); margin-top: 0; text-align: center; text-transform: uppercase; font-size: 1em;">Mi Cuenta</h3>
+            <span id="auth-status-label" style="font-size: 0.75em; color: var(--f1-turquesa); font-weight: bold; display: block; text-align: center; margin-bottom: 10px;">SESIÓN CERRADA</span>
+            
+            <div id="form-login">
+                <label>Correo Electrónico</label>
+                <input type="email" id="user-email" placeholder="correo@example.com">
+                
+                <label>Contraseña</label>
+                <input type="password" id="user-pass" placeholder="••••">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px;">
+                    <button class="btn-action" style="margin:0;" onclick="iniciarSesion()">Ingresar</button>
+                    <button class="btn-action btn-turquesa" style="margin:0;" onclick="registrarUsuario()">Registrar</button>
+                </div>
+            </div>
+            <div id="form-logged" style="display:none;">
+                <p style="font-size:0.8em; margin: 5px 0; text-align:center;" id="txt-welcome-user">¡Bienvenido!</p>
+                <button class="btn-action" style="background: #cc0404; color: white;" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+            
+            <button class="btn-action" style="background: #3e444d; color: white; margin-top: 10px;" onclick="toggleModalAuth()">Cerrar Ventana</button>
+        </div>
+    </div>
+
+    <!-- VISTA 1: PREDICCIONES -->
+    <div id="view-predicciones" class="view-section active">
+        <div class="card-box">
+            <h3 style="color: var(--f1-papaya); font-size: 0.95em; text-transform: uppercase; text-align: center; margin-top: 0;">Cargar Predicción</h3>
+            
+            <label>Seleccionar Gran Premio</label>
+            <select id="raceSelect">
+                <option value="Australia">Ronda 1 - Australia</option>
+                <option value="China">Ronda 2 - China (Sprint)</option>
+                <option value="Japón">Ronda 3 - Japón</option>
+                <option value="Miami">Ronda 4 - Miami (Sprint)</option>
+            </select>
+
+            <label>Pole Position (Piloto)</label>
+            <input type="text" id="pred-q" placeholder="Ej: LEC">
+
+            <label>Sprint - Top 3 (Comas)</label>
+            <input type="text" id="pred-s" placeholder="RUS, ANT, NOR">
+
+            <label>Carrera - Top 5 (Comas)</label>
+            <input type="text" id="pred-r" placeholder="RUS, ANT, HAD, PIA, LEC">
+
+            <button class="btn-action btn-turquesa" onclick="enviarPrediccion()">Guardar Predicción ⚡</button>
+        </div>
+    </div>
+
+    <!-- VISTA 2: STANDINGS (GLOBAL) -->
+    <div id="view-standings" class="view-section">
+        <div class="card-box" style="padding: 10px;">
+            <h3 style="color: var(--f1-turquesa); font-size: 0.95em; text-transform: uppercase; text-align: center;">Tabla General</h3>
+            <table class="standing-table">
+                <tr>
+                    <td style="color: #666; font-weight: bold;">1</td>
+                    <td style="text-align: left; font-weight: bold; padding-left: 10px;">Test1</td>
+                    <td><span class="points-badge">156</span></td>
+                </tr>
+                <tr>
+                    <td style="color: #666; font-weight: bold;">2</td>
+                    <td style="text-align: left; font-weight: bold; padding-left: 10px;">Test2</td>
+                    <td><span class="points-badge">148</span></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- VISTA 3: MIS PUNTOS (DESGLOSE PERSONAL) -->
+    <div id="view-mispuntos" class="view-section">
+        <div class="card-box">
+            <h3 style="color: var(--f1-papaya); font-size: 0.95em; text-transform: uppercase; text-align: center; margin-top: 0;">Desglose de Puntos</h3>
+            <p style="font-size: 0.8em; color: #aaa; text-align: center;">Inicia sesión para ver tu historial carrera a carrera.</p>
+        </div>
+    </div>
+
+    <!-- VISTA 4: REGLAMENTO Y APOYO -->
+    <div id="view-reglamento" class="view-section">
+        <div class="card-box">
+            <h3 style="color: var(--f1-turquesa); font-size: 0.95em; text-transform: uppercase; text-align: center; margin-top: 0;">Reglamento & Colaboración</h3>
+            <p style="font-size: 0.8em; line-height: 1.4; color: #ccc;">
+                <strong>¿Cómo se suman los puntos?</strong> Acertar el Poleman otorga puntos base, los puestos exactos en el Sprint suman bonificación y los Top 5 de carrera definen el campeonato de la escudería. Las predicciones cierran estrictamente 48 horas antes de la primera sesión competitiva del fin de semana.
+            </p>
+            <hr style="border: 0; border-top: 1px solid #333; margin: 15px 0;">
+            <p style="font-size: 0.8em; text-align: center; color: #aaa;">Apoya el mantenimiento del servidor:</p>
+            <button class="btn-action" style="background: #00457c; color: white;" onclick="alertRedireccionPayPal()">Donar con PayPal 💙</button>
+        </div>
+    </div>
+
+    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="cambiarVista('predicciones', this)"><span>⚡</span>Predicciones</button>
+        <button class="nav-item" onclick="cambiarVista('standings', this)"><span>🏆</span>Standings</button>
+        <button class="nav-item" onclick="cambiarVista('mispuntos', this)"><span>📊</span>Mis Puntos</button>
+        <button class="nav-item" onclick="cambiarVista('reglamento', this)"><span>📜</span>Reglamento</button>
+    </nav>
+
+<script>
+    const SUPABASE_URL = 'TU_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let usuarioActual = null;
+
+    window.onload = async () => {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            usuarioActual = session.user;
+            gestionarUIAuth(true);
+        }
+    };
+
+    function cambiarVista(nombreVista, btnElement) {
+        // Ocultar todas las vistas
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        // Mostrar la seleccionada
+        document.getElementById('view-' + nombreVista).classList.add('active');
+
+        // Actualizar botones de la barra inferior
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        btnElement.classList.add('active');
+    }
+
+    function toggleModalAuth() {
+        const modal = document.getElementById('auth-modal');
+        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    async function registrarUsuario() {
+        const email = document.getElementById('user-email').value;
+        const password = document.getElementById('user-pass').value;
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) alert("Error en registro: " + error.message);
+        else alert("¡Registro exitoso! Ya puedes ingresar.");
+    }
+
+    async function iniciarSesion() {
+        const email = document.getElementById('user-email').value;
+        const password = document.getElementById('user-pass').value;
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) alert("Error de acceso: " + error.message);
+        else {
+            usuarioActual = data.user;
+            gestionarUIAuth(true);
+            toggleModalAuth();
+        }
+    }
+
+    async function cerrarSesion() {
+        await supabaseClient.auth.signOut();
+        usuarioActual = null;
+        gestionarUIAuth(false);
+        toggleModalAuth();
+    }
+
+    function gestionarUIAuth(isLoggedIn) {
+        document.getElementById('form-login').style.display = isLoggedIn ? 'none' : 'block';
+        document.getElementById('form-logged').style.display = isLoggedIn ? 'block' : 'none';
+        if (isLoggedIn) {
+            document.getElementById('txt-welcome-user').innerText = `Hola, ${usuarioActual.email}`;
+            document.getElementById('auth-status-label').innerText = "SESIÓN ACTIVA";
+        } else {
+            document.getElementById('auth-status-label').innerText = "SESIÓN CERRADA";
+        }
+    }
+
+    async function enviarPrediccion() {
+        if (!usuarioActual) {
+            alert("Debes iniciar sesión con tu icono de perfil para registrar tu predicción.");
+            toggleModalAuth();
+            return;
+        }
+        const gp = document.getElementById('raceSelect').value;
+        const pole = document.getElementById('pred-q').value;
+        const sprint = document.getElementById('pred-s').value;
+        const carrera = document.getElementById('pred-r').value;
+
+        const { error } = await supabaseClient
+            .from('predicciones')
+            .upsert({
+                usuario_id: usuarioActual.id,
+                gran_premio: gp,
+                poleman: pole,
+                carrera_p1: carrera.split(',')[0]?.trim(),
+                carrera_p2: carrera.split(',')[1]?.trim(),
+                carrera_p3: carrera.split(',')[2]?.trim(),
+                carrera_p4: carrera.split(',')[3]?.trim(),
+                carrera_p5: carrera.split(',')[4]?.trim()
+            }, { onConflict: 'usuario_id, gran_premio' });
+
+        if (error) alert("Error al guardar: " + error.message);
+        else alert("¡Predicción guardada con éxito en Podium Fantasy Fórmula 1!");
+    }
+
+    function alertRedireccionPayPal() {
+        alert("Aquí se enlazará el botón oficial de donación de PayPal para apoyar el proyecto.");
+    }
+</script>
+</body>
+</html>
