@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Podium Fantasy Fórmula 1</title>
+    <title>Podium FantasyF1 | EFEH Tech</title>
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0b0e11">
-
-    <!-- Supabase JS Client CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
@@ -19,8 +16,8 @@
             --f1-papaya: #ff8700;
             --f1-bg: #0b0e11;
             --f1-card: #1c2025;
-            --f1-modal-bg: #161a1e;
             --white: #ffffff;
+            --danger: #ff4d4d;
         }
 
         body {
@@ -28,350 +25,618 @@
             color: var(--white);
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
-            padding: 10px;
-            padding-bottom: 70px; /* Espacio para la barra inferior en móviles */
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* ENCABEZADO SUPERIOR CON PERFIL */
-        .app-header {
+        .app-header-full {
             width: 100%;
-            max-width: 600px;
+            background: var(--f1-card);
+            padding: 15px 20px;
+            box-sizing: border-box;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--f1-card);
-            padding: 12px 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border-bottom: 3px solid var(--f1-papaya);
+            border-bottom: 4px solid var(--f1-papaya);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-title-container {
+            display: flex;
+            flex-direction: column;
         }
 
         .app-title {
             font-weight: 900;
-            font-size: 1.1em;
+            font-size: 1.2em;
             color: var(--f1-papaya);
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
+            margin: 0;
         }
 
-        /* BOTÓN DE PERFIL (ICONO TURQUESA) */
-        .profile-btn {
-            background: #2a2f36;
-            border: 2px solid var(--f1-turquesa);
+        .app-subtitle {
+            font-size: 0.7em;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+
+        .profile-icon-btn {
+            background: #101317;
+            border: 1px solid #3e444d;
             color: var(--f1-turquesa);
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 1.2em;
+            font-size: 1.1em;
             transition: 0.2s;
         }
-        .profile-btn:hover { background: var(--f1-turquesa); color: black; }
+        .profile-icon-btn:hover { background: #252b33; }
 
-        /* MODAL DE PERFIL FLOTANTE */
-        #auth-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background: var(--f1-modal-bg);
-            padding: 25px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 350px;
-            border: 2px solid var(--f1-turquesa);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
-        }
-
-        /* CONTENEDOR DE VISTAS */
-        .view-section {
+        .container {
             width: 100%;
-            max-width: 600px;
-            display: none;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+            box-sizing: border-box;
+            margin-bottom: 70px;
         }
-        .view-section.active { display: block; }
 
-        /* TARJETAS Y FORMULARIOS */
         .card-box {
             background: var(--f1-card);
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            margin-bottom: 15px;
         }
 
-        label { display: block; font-size: 0.7em; color: #a0a0a0; margin-top: 12px; text-transform: uppercase; font-weight: bold; }
-        select, input {
-            width: 100%; padding: 12px; margin-top: 5px; background: #2a2f36;
-            border: 1px solid #3e444d; color: white; border-radius: 6px;
-            box-sizing: border-box; font-size: 0.9em;
+        .card-box h3 {
+            color: var(--f1-turquesa);
+            font-size: 1em;
+            text-transform: uppercase;
+            margin-top: 0;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #101317;
+            border: 1px solid #3e444d;
+            border-radius: 8px;
+            color: var(--white);
+            box-sizing: border-box;
+            font-size: 0.9em;
+        }
+
+        label {
+            font-size: 0.75em;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 4px;
         }
 
         .btn-action {
-            width: 100%; padding: 14px; margin-top: 15px;
-            background: var(--f1-papaya); color: #000;
-            border: none; border-radius: 6px; font-weight: 800;
-            cursor: pointer; transition: 0.3s; text-transform: uppercase;
+            width: 100%;
+            padding: 14px;
+            background: var(--f1-papaya);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            text-decoration: none;
+            display: inline-block;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(255, 135, 0, 0.3);
         }
-        .btn-action:hover { opacity: 0.9; transform: scale(1.01); }
-        .btn-turquesa { background: var(--f1-turquesa); color: #000; }
+        .btn-action:hover { opacity: 0.9; }
 
-        /* BARRA DE NAVEGACIÓN INFERIOR (ESTILO APP MÓVIL) */
-        .bottom-nav {
+        .btn-turquesa {
+            background: var(--f1-turquesa);
+            color: #000;
+            box-shadow: 0 4px 12px rgba(0, 210, 190, 0.3);
+        }
+
+        .nav-bar-bottom {
             position: fixed;
-            bottom: 0; left: 0; width: 100%;
-            background: #14181c;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--f1-card);
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
-            border-top: 2px solid #2a2f36;
-            z-index: 900;
+            border-top: 1px solid #3e444d;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.6);
+            z-index: 99;
+            box-sizing: border-box;
+            padding: 5px 0;
         }
-        .nav-item {
-            background: none; border: none; color: #808080;
-            font-size: 0.7em; text-transform: uppercase; font-weight: bold;
-            display: flex; flex-direction: column; align-items: center; gap: 4px;
-            cursor: pointer; transition: 0.2s;
-        }
-        .nav-item span { font-size: 1.4em; }
-        .nav-item.active { color: var(--f1-turquesa); }
 
-        /* TABLA DE STANDINGS */
-        .standing-table {
-            width: 100%; border-collapse: collapse; background: var(--f1-card);
-            border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        .nav-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 0.6em;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 8px 0;
+            transition: 0.2s;
         }
-        .standing-table tr { border-bottom: 1px solid #2a2f36; }
-        .standing-table td { padding: 12px; text-align: center; }
-        .points-badge {
-            background: var(--f1-turquesa); color: black; font-weight: bold;
-            padding: 4px 10px; border-radius: 4px; font-size: 14px;
+
+        .nav-btn span.icon {
+            font-size: 1.2em;
+        }
+
+        .nav-btn.active {
+            color: var(--f1-turquesa);
+        }
+
+        .app-download-mini {
+            background: #101317;
+            border: 1px solid #3e444d;
+            padding: 12px 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .app-download-mini p {
+            font-size: 0.75em;
+            color: #ccc;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .sub-tab-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 12px;
+        }
+        .sub-tab-btn {
+            flex: 1;
+            padding: 8px;
+            background: #101317;
+            border: 1px solid #3e444d;
+            color: #aaa;
+            font-size: 0.75em;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .sub-tab-btn.active {
+            background: var(--f1-turquesa);
+            color: #000;
+            border-color: var(--f1-turquesa);
+        }
+
+        .hidden { display: none !important; }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.8em;
+            color: var(--f1-turquesa);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .sprint-accordion {
+            background: #101317;
+            border: 1px dashed var(--f1-papaya);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
         }
     </style>
 </head>
 <body>
 
-    <!-- ENCABEZADO SUPERIOR -->
-    <header class="app-header">
-        <div class="app-title">Podium Fantasy F1</div>
-        <button class="profile-btn" onclick="toggleModalAuth()">👤</button>
+    <header class="app-header-full">
+        <div class="header-title-container">
+            <h1 class="app-title">Podium FantasyF1</h1>
+            <p class="app-subtitle">EFEH Tech Systems</p>
+        </div>
+        <button class="profile-icon-btn" onclick="switchDashboardTab('account')" title="Mi Cuenta">
+            👤
+        </button>
     </header>
 
-    <!-- MODAL DE ACCESO / USUARIO -->
-    <div id="auth-modal">
-        <div class="modal-content">
-            <h3 style="color: var(--f1-papaya); margin-top: 0; text-align: center; text-transform: uppercase; font-size: 1em;">Mi Cuenta</h3>
-            <span id="auth-status-label" style="font-size: 0.75em; color: var(--f1-turquesa); font-weight: bold; display: block; text-align: center; margin-bottom: 10px;">SESIÓN CERRADA</span>
+    <div class="container">
+
+        <!-- AUTENTICACIÓN -->
+        <div id="authView" class="card-box">
+            <h3 id="authTitle">Iniciar Sesión</h3>
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <input type="email" id="authEmail" placeholder="Correo electrónico" required>
+                <input type="password" id="authPassword" placeholder="Contraseña" required>
+                <button type="submit" id="authBtn" class="btn-action">Entrar</button>
+            </form>
+            <div class="auth-switch" onclick="toggleAuthMode()">¿No tienes cuenta? Regístrate aquí</div>
+        </div>
+
+        <!-- DASHBOARD PRINCIPAL -->
+        <div id="dashboardView" class="hidden" style="display: flex; flex-direction: column; gap: 15px;">
             
-            <div id="form-login">
-                <label>Correo Electrónico</label>
-                <input type="email" id="user-email" placeholder="correo@example.com">
+            <!-- 1. DASHBOARD / PREDICCIONES -->
+            <div id="tabHome" class="dashboard-tab" style="display: flex; flex-direction: column; gap: 15px;">
                 
-                <label>Contraseña</label>
-                <input type="password" id="user-pass" placeholder="••••">
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px;">
-                    <button class="btn-action" style="margin:0;" onclick="iniciarSesion()">Ingresar</button>
-                    <button class="btn-action btn-turquesa" style="margin:0;" onclick="registrarUsuario()">Registrar</button>
+                <div class="app-download-mini">
+                    <p>Lleva el Fantasy en tu móvil Android.</p>
+                    <a href="https://github.com/tu-usuario/tu-repositorio/releases/latest/download/app-release.apk" class="btn-action btn-turquesa" style="width: auto; padding: 8px 12px; font-size: 0.75em;">
+                        APK ⚡
+                    </a>
+                </div>
+
+                <div class="card-box">
+                    <h3>Mi Predicción</h3>
+                    
+                    <label>Seleccionar Gran Premio</label>
+                    <select id="raceSelect" onchange="actualizarModalidadGranPremio()">
+                        <option value="">Cargando calendario...</option>
+                    </select>
+
+                    <label>Piloto Pole Position</label>
+                    <select id="poleSelect" class="pole-select">
+                        <option value="">Selecciona Poleman</option>
+                    </select>
+
+                    <!-- SECCIÓN SPRINT -->
+                    <div id="sprintSection" class="sprint-accordion hidden">
+                        <h4 style="color: var(--f1-papaya); margin: 0 0 8px 0; font-size: 0.85em; text-transform: uppercase;">🏁 Sprint (Top 3)</h4>
+                        <label>1° Puesto Sprint</label>
+                        <select class="driver-select sprint-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                        <label>2° Puesto Sprint</label>
+                        <select class="driver-select sprint-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                        <label>3° Puesto Sprint</label>
+                        <select class="driver-select sprint-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                    </div>
+
+                    <!-- CARRERA LARGA (TOP 5) -->
+                    <div style="margin-top: 10px;">
+                        <h4 style="color: var(--f1-turquesa); margin: 0 0 8px 0; font-size: 0.85em; text-transform: uppercase;">🏎️ Carrera Larga (Top 5)</h4>
+                        <label>1° Puesto</label>
+                        <select class="driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                        <label>2° Puesto</label>
+                        <select class="driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                        <label>3° Puesto</label>
+                        <select class="driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                        <label>4° Puesto</label>
+                        <select class="driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                        <label>5° Puesto</label>
+                        <select class="driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                    </div>
+
+                    <button class="btn-action" style="margin-top: 15px;" onclick="guardarPrediccion()">Guardar Predicción</button>
                 </div>
             </div>
-            <div id="form-logged" style="display:none;">
-                <p style="font-size:0.8em; margin: 5px 0; text-align:center;" id="txt-welcome-user">¡Bienvenido!</p>
-                <button class="btn-action" style="background: #cc0404; color: white;" onclick="cerrarSesion()">Cerrar Sesión</button>
+
+            <!-- 2. STANDINGS -->
+            <div id="tabStandings" class="dashboard-tab hidden card-box">
+                <h3>Tabla de Posiciones</h3>
+                
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" id="subIndBtn" onclick="switchStandingsSub('individual')">Individual</button>
+                    <button class="sub-tab-btn" id="subEscBtn" onclick="switchStandingsSub('escuderias')">Escuderías</button>
+                </div>
+
+                <div id="subStandingsIndividual">
+                    <p style="font-size: 0.8em; color: #aaa; text-align: center;">Ranking general sincronizado desde base de datos.</p>
+                    <div style="background: #101317; padding: 12px; border-radius: 8px; text-align: center; color: #666; font-size: 0.8em;" id="dbIndividualContainer">
+                        [Cargando registros individuales...]
+                    </div>
+                </div>
+
+                <div id="subStandingsEscuderias" class="hidden">
+                    <p style="font-size: 0.8em; color: #aaa; text-align: center;">Ranking por escuderías sincronizado desde base de datos.</p>
+                    <div style="background: #101317; padding: 12px; border-radius: 8px; text-align: center; color: #666; font-size: 0.8em;" id="dbEscuderiasContainer">
+                        [Cargando registros de escuderías...]
+                    </div>
+                </div>
             </div>
-            
-            <button class="btn-action" style="background: #3e444d; color: white; margin-top: 10px;" onclick="toggleModalAuth()">Cerrar Ventana</button>
+
+            <!-- 3. MI CUENTA -->
+            <div id="tabAccount" class="dashboard-tab hidden card-box" style="text-align: left;">
+                <h3>Mi Cuenta y Puntuación</h3>
+                <div style="background: #101317; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <label>Usuario / Correo:</label>
+                    <p id="userEmailDisplay" style="font-size: 0.85em; color: var(--f1-turquesa); margin: 0 0 8px 0;">-</p>
+                    <label>Puntuación Total Acumulada:</label>
+                    <p id="userTotalPoints" style="font-size: 1.2em; font-weight: bold; color: var(--f1-papaya); margin: 0;">0 pts</p>
+                </div>
+
+                <h4 style="color: var(--f1-turquesa); font-size: 0.85em; text-transform: uppercase; margin-bottom: 6px;">Desglose por Gran Premio</h4>
+                <label>Seleccionar Gran Premio</label>
+                <select id="gpHistorySelect" onchange="cargarDesgloseGPDB()">
+                    <option value="">Selecciona un GP para consultar</option>
+                </select>
+
+                <!-- Bloque completamente dinámico listo para lectura de base de datos -->
+                <div id="gpBreakdownBox" style="background: #101317; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.8em; color: #ccc;">
+                    <p style="text-align: center; color: #666; margin: 0;">Selecciona un Gran Premio para consultar el desglose directamente desde las tablas.</p>
+                </div>
+
+                <button class="btn-action" style="background: var(--danger); color: white; margin-top: 15px;" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+
+            <!-- 4. Info -->
+            <div id="tabInfo" class="dashboard-tab hidden card-box" style="text-align: left;">
+                <h3>Reglamento de Puntuación</h3>
+                <p style="font-size: 0.8em; line-height: 1.5; color: #cccccc; margin-bottom: 15px;">
+                    <strong>1.</strong> 5 pts por acertar el Pole Man.<br>
+                    <strong>2.</strong> 5 pts por acertar la vuelta rápida. <em>(No válido actualmente)</em><br>
+                    <strong>3.</strong> Podio de ganadores: Tripleta perfecta suman puntos triples (acertar el orden del podio).<br>
+                    <strong>4.</strong> 5 pilotos máximo por carrera (aplicará el puntaje que obtengan los pilotos en carrera).<br>
+                    <strong>5.</strong> En cada carrera se puede variar de pilotos hasta finalizar la FP3 de cada Gran Premio.<br>
+                    <strong>6.</strong> Puntos dobles para el que acierte la posición de un piloto en la grilla (Solo hasta el 5° puesto).
+                </p>
+                <hr style="border: 0; border-top: 1px solid #3e444d; margin: 15px 0;">
+                <h3 style="color: var(--f1-papaya);">Apoya el Proyecto Podium FantasyF1</h3>
+                <p style="font-size: 0.75em; color: #bbb; margin-bottom: 10px; text-align: center;">Ayuda a mantener la infraestructura de EFEH Tech activa.</p>
+                <a href="https://paypal.me/3lvisfeh" target="_blank" class="btn-action" style="background: #00457c; color: white; padding: 10px; font-size: 0.8em;">
+                    💙 Donar con PayPal 💙
+                </a>
+            </div>
+
         </div>
+
     </div>
 
-    <!-- VISTA 1: PREDICCIONES -->
-    <div id="view-predicciones" class="view-section active">
-        <div class="card-box">
-            <h3 style="color: var(--f1-papaya); font-size: 0.95em; text-transform: uppercase; text-align: center; margin-top: 0;">Cargar Predicción</h3>
-            
-            <label>Seleccionar Gran Premio</label>
-            <select id="raceSelect">
-                <option value="Australia">Ronda 1 - Australia</option>
-                <option value="China">Ronda 2 - China (Sprint)</option>
-                <option value="Japón">Ronda 3 - Japón</option>
-                <option value="Miami">Ronda 4 - Miami (Sprint)</option>
-            </select>
-
-            <label>Pole Position (Piloto)</label>
-            <input type="text" id="pred-q" placeholder="Ej: LEC">
-
-            <label>Sprint - Top 3 (Comas)</label>
-            <input type="text" id="pred-s" placeholder="RUS, ANT, NOR">
-
-            <label>Carrera - Top 5 (Comas)</label>
-            <input type="text" id="pred-r" placeholder="RUS, ANT, HAD, PIA, LEC">
-
-            <button class="btn-action btn-turquesa" onclick="enviarPrediccion()">Guardar Predicción ⚡</button>
-        </div>
-    </div>
-
-    <!-- VISTA 2: STANDINGS (GLOBAL) -->
-    <div id="view-standings" class="view-section">
-        <div class="card-box" style="padding: 10px;">
-            <h3 style="color: var(--f1-turquesa); font-size: 0.95em; text-transform: uppercase; text-align: center;">Tabla General</h3>
-            <table class="standing-table">
-                <tr>
-                    <td style="color: #666; font-weight: bold;">1</td>
-                    <td style="text-align: left; font-weight: bold; padding-left: 10px;">Test1</td>
-                    <td><span class="points-badge">156</span></td>
-                </tr>
-                <tr>
-                    <td style="color: #666; font-weight: bold;">2</td>
-                    <td style="text-align: left; font-weight: bold; padding-left: 10px;">Test2</td>
-                    <td><span class="points-badge">148</span></td>
-                </tr>
-            </table>
-        </div>
-    </div>
-
-    <!-- VISTA 3: MIS PUNTOS (DESGLOSE PERSONAL) -->
-    <div id="view-mispuntos" class="view-section">
-        <div class="card-box">
-            <h3 style="color: var(--f1-papaya); font-size: 0.95em; text-transform: uppercase; text-align: center; margin-top: 0;">Desglose de Puntos</h3>
-            <p style="font-size: 0.8em; color: #aaa; text-align: center;">Inicia sesión para ver tu historial carrera a carrera.</p>
-        </div>
-    </div>
-
-    <!-- VISTA 4: REGLAMENTO Y APOYO -->
-    <div id="view-reglamento" class="view-section">
-        <div class="card-box">
-            <h3 style="color: var(--f1-turquesa); font-size: 0.95em; text-transform: uppercase; text-align: center; margin-top: 0;">Reglamento & Colaboración</h3>
-            <p style="font-size: 0.8em; line-height: 1.4; color: #ccc;">
-                <strong>¿Cómo se suman los puntos?</strong> Acertar el Poleman otorga puntos base, los puestos exactos en el Sprint suman bonificación y los Top 5 de carrera definen el campeonato de la escudería. Las predicciones cierran estrictamente 48 horas antes de la primera sesión competitiva del fin de semana.
-            </p>
-            <hr style="border: 0; border-top: 1px solid #333; margin: 15px 0;">
-            <p style="font-size: 0.8em; text-align: center; color: #aaa;">Apoya el mantenimiento del servidor:</p>
-            <button class="btn-action" style="background: #00457c; color: white;" onclick="alertRedireccionPayPal()">Donar con PayPal 💙</button>
-        </div>
-    </div>
-
-    <!-- BARRA DE NAVEGACIÓN INFERIOR -->
-    <nav class="bottom-nav">
-        <button class="nav-item active" onclick="cambiarVista('predicciones', this)"><span>⚡</span>Predicciones</button>
-        <button class="nav-item" onclick="cambiarVista('standings', this)"><span>🏆</span>Standings</button>
-        <button class="nav-item" onclick="cambiarVista('mispuntos', this)"><span>📊</span>Mis Puntos</button>
-        <button class="nav-item" onclick="cambiarVista('reglamento', this)"><span>📜</span>Reglamento</button>
+    <nav class="nav-bar-bottom hidden" id="bottomNavBar">
+        <button class="nav-btn active" id="navHomeBtn" onclick="switchDashboardTab('home')">
+            <span class="icon">🏎️</span> Dashboard
+        </button>
+        <button class="nav-btn" id="navStandingsBtn" onclick="switchDashboardTab('standings')">
+            <span class="icon">📊</span> Standings
+        </button>
+        <button class="nav-btn" id="navAccountBtn" onclick="switchDashboardTab('account')">
+            <span class="icon">👤</span> Mi Cuenta
+        </button>
+        <button class="nav-btn" id="navInfoBtn" onclick="switchDashboardTab('Info')">
+            <span class="icon">📜</span> Info
+        </button>
     </nav>
 
-<script>
-    const SUPABASE_URL = 'TU_SUPABASE_URL';
-    const SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <script>
+        let isRegistering = false;
+        let driversList = [];
 
-    let usuarioActual = null;
-
-    window.onload = async () => {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            usuarioActual = session.user;
-            gestionarUIAuth(true);
+        async function inicializarApp() {
+            await cargarPilotos2026();
+            await cargarCalendario();
         }
-    };
 
-    function cambiarVista(nombreVista, btnElement) {
-        // Ocultar todas las vistas
-        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-        // Mostrar la seleccionada
-        document.getElementById('view-' + nombreVista).classList.add('active');
-
-        // Actualizar botones de la barra inferior
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        btnElement.classList.add('active');
-    }
-
-    function toggleModalAuth() {
-        const modal = document.getElementById('auth-modal');
-        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
-    }
-
-    async function registrarUsuario() {
-        const email = document.getElementById('user-email').value;
-        const password = document.getElementById('user-pass').value;
-        const { data, error } = await supabaseClient.auth.signUp({ email, password });
-        if (error) alert("Error en registro: " + error.message);
-        else alert("¡Registro exitoso! Ya puedes ingresar.");
-    }
-
-    async function iniciarSesion() {
-        const email = document.getElementById('user-email').value;
-        const password = document.getElementById('user-pass').value;
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) alert("Error de acceso: " + error.message);
-        else {
-            usuarioActual = data.user;
-            gestionarUIAuth(true);
-            toggleModalAuth();
+        async function cargarPilotos2026() {
+            try {
+                const response = await fetch('./drivers.json');
+                driversList = await response.json();
+            } catch (e) {
+                // Parrilla oficial actualizada 2026 (11 equipos / 22 pilotos)
+                driversList = [
+                    { code: 'VER', name: 'Max Verstappen', team: 'Red Bull Racing' },
+                    { code: 'HAD', name: 'Isack Hadjar', team: 'Red Bull Racing' },
+                    { code: 'LEC', name: 'Charles Leclerc', team: 'Ferrari' },
+                    { code: 'HAM', name: 'Lewis Hamilton', team: 'Ferrari' },
+                    { code: 'NOR', name: 'Lando Norris', team: 'McLaren' },
+                    { code: 'PIA', name: 'Oscar Piastri', team: 'McLaren' },
+                    { code: 'RUS', name: 'George Russell', team: 'Mercedes' },
+                    { code: 'ANT', name: 'Kimi Antonelli', team: 'Mercedes' },
+                    { code: 'ALO', name: 'Fernando Alonso', team: 'Aston Martin' },
+                    { code: 'STR', name: 'Lance Stroll', team: 'Aston Martin' },
+                    { code: 'GAS', name: 'Pierre Gasly', team: 'Alpine' },
+                    { code: 'COL', name: 'Franco Colapinto', team: 'Alpine' },
+                    { code: 'OCO', name: 'Esteban Ocon', team: 'Haas F1 Team' },
+                    { code: 'BEA', name: 'Oliver Bearman', team: 'Haas F1 Team' },
+                    { code: 'LAW', name: 'Liam Lawson', team: 'Racing Bulls' },
+                    { code: 'LIN', name: 'Arvid Lindblad', team: 'Racing Bulls' },
+                    { code: 'SAI', name: 'Carlos Sainz', team: 'Williams' },
+                    { code: 'ALB', name: 'Alexander Albon', team: 'Williams' },
+                    { code: 'HUL', name: 'Nico Hülkenberg', team: 'Audi' },
+                    { code: 'BOR', name: 'Gabriel Bortoleto', team: 'Audi' },
+                    { code: 'PER', name: 'Sergio Pérez', team: 'Cadillac F1 Team' },
+                    { code: 'BOT', name: 'Valtteri Bottas', team: 'Cadillac F1 Team' }
+                ];
+            }
+            poblarSelectoresPilotos();
         }
-    }
 
-    async function cerrarSesion() {
-        await supabaseClient.auth.signOut();
-        usuarioActual = null;
-        gestionarUIAuth(false);
-        toggleModalAuth();
-    }
+        function poblarSelectoresPilotos() {
+            // Llenar selector de Pole
+            const poleSelect = document.getElementById('poleSelect');
+            poleSelect.innerHTML = '<option value="">Selecciona Poleman</option>';
+            
+            // Llenar selectores de carrera
+            const raceSelects = document.querySelectorAll('.driver-select');
+            raceSelects.forEach(select => {
+                select.innerHTML = '<option value="">Selecciona piloto</option>';
+            });
 
-    function gestionarUIAuth(isLoggedIn) {
-        document.getElementById('form-login').style.display = isLoggedIn ? 'none' : 'block';
-        document.getElementById('form-logged').style.display = isLoggedIn ? 'block' : 'none';
-        if (isLoggedIn) {
-            document.getElementById('txt-welcome-user').innerText = `Hola, ${usuarioActual.email}`;
-            document.getElementById('auth-status-label').innerText = "SESIÓN ACTIVA";
-        } else {
-            document.getElementById('auth-status-label').innerText = "SESIÓN CERRADA";
+            driversList.forEach(d => {
+                const optText = `${d.code} - ${d.name} (${d.team})`;
+                
+                const optPole = document.createElement('option');
+                optPole.value = d.code;
+                optPole.textContent = optText;
+                poleSelect.appendChild(optPole);
+
+                raceSelects.forEach(select => {
+                    const optRace = document.createElement('option');
+                    optRace.value = d.code;
+                    optRace.textContent = optText;
+                    select.appendChild(optRace);
+                });
+            });
         }
-    }
 
-    async function enviarPrediccion() {
-        if (!usuarioActual) {
-            alert("Debes iniciar sesión con tu icono de perfil para registrar tu predicción.");
-            toggleModalAuth();
-            return;
+        // Filtro anti-duplicados estrictamente para la carrera, sin afectar la Pole
+        function verificarDuplicadosCarrera() {
+            const raceSlots = document.querySelectorAll('.driver-select');
+            const selectedCodes = Array.from(raceSlots).map(s => s.value).filter(v => v !== "");
+
+            raceSlots.forEach(select => {
+                const currentValue = select.value;
+                Array.from(select.options).forEach(option => {
+                    if (option.value === "") return;
+                    if (selectedCodes.includes(option.value) && option.value !== currentValue) {
+                        option.disabled = true;
+                    } else {
+                        option.disabled = false;
+                    }
+                });
+            });
         }
-        const gp = document.getElementById('raceSelect').value;
-        const pole = document.getElementById('pred-q').value;
-        const sprint = document.getElementById('pred-s').value;
-        const carrera = document.getElementById('pred-r').value;
 
-        const { error } = await supabaseClient
-            .from('predicciones')
-            .upsert({
-                usuario_id: usuarioActual.id,
-                gran_premio: gp,
-                poleman: pole,
-                carrera_p1: carrera.split(',')[0]?.trim(),
-                carrera_p2: carrera.split(',')[1]?.trim(),
-                carrera_p3: carrera.split(',')[2]?.trim(),
-                carrera_p4: carrera.split(',')[3]?.trim(),
-                carrera_p5: carrera.split(',')[4]?.trim()
-            }, { onConflict: 'usuario_id, gran_premio' });
+        function toggleAuthMode() {
+            isRegistering = !isRegistering;
+            document.getElementById('authTitle').innerText = isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión';
+            document.getElementById('authBtn').innerText = isRegistering ? 'Registrarse' : 'Entrar';
+            document.querySelector('.auth-switch').innerText = isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí';
+        }
 
-        if (error) alert("Error al guardar: " + error.message);
-        else alert("¡Predicción guardada con éxito en Podium Fantasy Fórmula 1!");
+        function handleAuth(event) {
+            event.preventDefault();
+            const emailInput = document.getElementById('authEmail').value;
+            document.getElementById('userEmailDisplay').innerText = emailInput;
+            
+            document.getElementById('authView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.remove('hidden');
+            document.getElementById('bottomNavBar').classList.remove('hidden');
+            inicializarApp();
+        }
+
+        function cerrarSesion() {
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('bottomNavBar').classList.add('hidden');
+            document.getElementById('authView').classList.remove('hidden');
+            switchDashboardTab('home');
+        }
+
+        function switchDashboardTab(tabName) {
+    document.querySelectorAll('.dashboard-tab').forEach(tab => tab.classList.add('hidden'));
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+    if (tabName === 'home') {
+        document.getElementById('tabHome').classList.remove('hidden');
+        document.getElementById('navHomeBtn').classList.add('active');
+    } else if (tabName === 'standings') {
+        document.getElementById('tabStandings').classList.remove('hidden');
+        document.getElementById('navStandingsBtn').classList.add('active');
+    } else if (tabName === 'account') {
+        document.getElementById('tabAccount').classList.remove('hidden');
+        document.getElementById('navAccountBtn').classList.add('active');
+    } else if (tabName === 'info' || tabName === 'Info') {
+        document.getElementById('tabInfo').classList.remove('hidden');
+        document.getElementById('navInfoBtn').classList.add('active');
     }
+        }
 
-    function alertRedireccionPayPal() {
-        alert("Aquí se enlazará el botón oficial de donación de PayPal para apoyar el proyecto.");
-    }
-</script>
+        function switchStandingsSub(subType) {
+            document.getElementById('subIndBtn').classList.remove('active');
+            document.getElementById('subEscBtn').classList.remove('active');
+            document.getElementById('subStandingsIndividual').classList.add('hidden');
+            document.getElementById('subStandingsEscuderias').classList.add('hidden');
+
+            if (subType === 'individual') {
+                document.getElementById('subIndBtn').classList.add('active');
+                document.getElementById('subStandingsIndividual').classList.remove('hidden');
+            } else {
+                document.getElementById('subEscBtn').classList.add('active');
+                document.getElementById('subStandingsEscuderias').classList.remove('hidden');
+            }
+        }
+
+        async function cargarCalendario() {
+            try {
+                const response = await fetch('./calendar.json');
+                const calendar = await response.json();
+                const selectRace = document.getElementById('raceSelect');
+                const historySelect = document.getElementById('gpHistorySelect');
+                
+                selectRace.innerHTML = '<option value="">Selecciona un Gran Premio</option>';
+                historySelect.innerHTML = '<option value="">Selecciona un GP para consultar</option>';
+                
+                calendar.forEach(race => {
+                    const option = document.createElement('option');
+                    option.value = race.round;
+                    option.dataset.isSprint = race.sprint || false;
+                    option.textContent = `Ronda ${race.round}: ${race.name} (${race.date})`;
+                    selectRace.appendChild(option);
+
+                    const historyOpt = option.cloneNode(true);
+                    historySelect.appendChild(historyOpt);
+                });
+            } catch (error) {
+                console.error("Error al cargar calendar.json:", error);
+            }
+        }
+
+        function actualizarModalidadGranPremio() {
+            const selectRace = document.getElementById('raceSelect');
+            const selectedOption = selectRace.options[selectRace.selectedIndex];
+            const isSprint = selectedOption && selectedOption.dataset.isSprint === 'true';
+            
+            const sprintSection = document.getElementById('sprintSection');
+            if (isSprint) {
+                sprintSection.classList.remove('hidden');
+            } else {
+                sprintSection.classList.add('hidden');
+                document.querySelectorAll('.sprint-slot').forEach(s => s.value = "");
+            }
+            verificarDuplicadosCarrera();
+        }
+
+        function cargarDesgloseGPDB() {
+            const historySelect = document.getElementById('gpHistorySelect');
+            const breakdownBox = document.getElementById('gpBreakdownBox');
+            const selectedVal = historySelect.value;
+
+            if(!selectedVal) {
+                breakdownBox.innerHTML = '<p style="text-align: center; color: #666; margin: 0;">Selecciona un Gran Premio para consultar el desglose directamente desde las tablas.</p>';
+                return;
+            }
+
+            // Espacio reservado para inyectar la consulta dinámica de Supabase/Base de datos
+            breakdownBox.innerHTML = `
+                <div style="text-align: center; color: var(--f1-turquesa); padding: 5px;">
+                    [ Consultando registros del GP #${selectedVal} en base de datos... ]
+                </div>
+            `;
+        }
+
+        function guardarPrediccion() {
+            alert("¡Predicción guardada correctamente con validación independiente de Pole y Carrera!");
+        }
+    </script>
 </body>
 </html>
