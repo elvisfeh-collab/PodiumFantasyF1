@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Podium FantasyF1 | EFEH Tech</title>
+    <title>Podium FantasyF1 | EFEH Tech Systems</title>
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0b0e11">
+
+    <!-- SDK de Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Script de Conexión y Credenciales -->
+    <script src="./connect_login.js"></script>
 
     <style>
         :root {
@@ -18,6 +23,7 @@
             --f1-card: #1c2025;
             --white: #ffffff;
             --danger: #ff4d4d;
+            --success: #00d2be;
         }
 
         body {
@@ -259,6 +265,16 @@
             padding: 12px;
             margin-bottom: 12px;
         }
+
+        .status-msg {
+            font-size: 0.85em;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .status-success { background: rgba(0, 210, 190, 0.15); color: var(--f1-turquesa); border: 1px solid var(--f1-turquesa); }
+        .status-error { background: rgba(255, 77, 77, 0.15); color: var(--danger); border: 1px solid var(--danger); }
     </style>
 </head>
 <body>
@@ -284,6 +300,7 @@
                 <button type="submit" id="authBtn" class="btn-action">Entrar</button>
             </form>
             <div class="auth-switch" onclick="toggleAuthMode()">¿No tienes cuenta? Regístrate aquí</div>
+            <div id="authFeedback" class="hidden"></div>
         </div>
 
         <!-- DASHBOARD PRINCIPAL -->
@@ -339,6 +356,7 @@
                     </div>
 
                     <button class="btn-action" style="margin-top: 15px;" onclick="guardarPrediccion()">Guardar Predicción</button>
+                    <div id="predictionFeedback" class="hidden"></div>
                 </div>
             </div>
 
@@ -382,7 +400,6 @@
                     <option value="">Selecciona un GP para consultar</option>
                 </select>
 
-                <!-- Bloque completamente dinámico listo para lectura de base de datos -->
                 <div id="gpBreakdownBox" style="background: #101317; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.8em; color: #ccc;">
                     <p style="text-align: center; color: #666; margin: 0;">Selecciona un Gran Premio para consultar el desglose directamente desde las tablas.</p>
                 </div>
@@ -399,7 +416,7 @@
                     <strong>3.</strong> Podio de ganadores: Tripleta perfecta suman puntos triples (acertar el orden del podio).<br>
                     <strong>4.</strong> 5 pilotos máximo por carrera (aplicará el puntaje que obtengan los pilotos en carrera).<br>
                     <strong>5.</strong> En cada carrera se puede variar de pilotos hasta finalizar la FP3 de cada Gran Premio.<br>
-                    <strong>6.</strong> Puntos dobles para el que acierte la posición de un piloto en la grilla (Solo hasta el 5° puesto).
+                    <strong>6.</strong> Puntos dobles para el que acierte la posición de un piloto en grilla (Solo hasta el 5° puesto).
                 </p>
                 <hr style="border: 0; border-top: 1px solid #3e444d; margin: 15px 0;">
                 <h3 style="color: var(--f1-papaya);">Apoya el Proyecto Podium FantasyF1</h3>
@@ -423,7 +440,7 @@
         <button class="nav-btn" id="navAccountBtn" onclick="switchDashboardTab('account')">
             <span class="icon">👤</span> Mi Cuenta
         </button>
-        <button class="nav-btn" id="navInfoBtn" onclick="switchDashboardTab('Info')">
+        <button class="nav-btn" id="navInfoBtn" onclick="switchDashboardTab('info')">
             <span class="icon">📜</span> Info
         </button>
     </nav>
@@ -431,6 +448,7 @@
     <script>
         let isRegistering = false;
         let driversList = [];
+        let usuarioActual = null;
 
         async function inicializarApp() {
             await cargarPilotos2026();
@@ -442,7 +460,6 @@
                 const response = await fetch('./drivers.json');
                 driversList = await response.json();
             } catch (e) {
-                // Parrilla oficial actualizada 2026 (11 equipos / 22 pilotos)
                 driversList = [
                     { code: 'VER', name: 'Max Verstappen', team: 'Red Bull Racing' },
                     { code: 'HAD', name: 'Isack Hadjar', team: 'Red Bull Racing' },
@@ -472,11 +489,9 @@
         }
 
         function poblarSelectoresPilotos() {
-            // Llenar selector de Pole
             const poleSelect = document.getElementById('poleSelect');
             poleSelect.innerHTML = '<option value="">Selecciona Poleman</option>';
             
-            // Llenar selectores de carrera
             const raceSelects = document.querySelectorAll('.driver-select');
             raceSelects.forEach(select => {
                 select.innerHTML = '<option value="">Selecciona piloto</option>';
@@ -499,7 +514,6 @@
             });
         }
 
-        // Filtro anti-duplicados estrictamente para la carrera, sin afectar la Pole
         function verificarDuplicadosCarrera() {
             const raceSlots = document.querySelectorAll('.driver-select');
             const selectedCodes = Array.from(raceSlots).map(s => s.value).filter(v => v !== "");
@@ -524,18 +538,37 @@
             document.querySelector('.auth-switch').innerText = isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí';
         }
 
-        function handleAuth(event) {
+        // Conexión asíncrona con Supabase para Login / Registro
+        async function handleAuth(event) {
             event.preventDefault();
             const emailInput = document.getElementById('authEmail').value;
-            document.getElementById('userEmailDisplay').innerText = emailInput;
-            
-            document.getElementById('authView').classList.add('hidden');
-            document.getElementById('dashboardView').classList.remove('hidden');
-            document.getElementById('bottomNavBar').classList.remove('hidden');
-            inicializarApp();
+            const feedback = document.getElementById('authFeedback');
+            feedback.className = "hidden";
+
+            try {
+                // Validación o inserción en la tabla de usuarios de Supabase
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .upsert([{ username: emailInput }], { onConflict: 'username' })
+                    .select();
+
+                if (error) throw error;
+
+                usuarioActual = emailInput;
+                document.getElementById('userEmailDisplay').innerText = usuarioActual;
+                
+                document.getElementById('authView').classList.add('hidden');
+                document.getElementById('dashboardView').classList.remove('hidden');
+                document.getElementById('bottomNavBar').classList.remove('hidden');
+                await inicializarApp();
+            } catch (err) {
+                feedback.textContent = "Error al autenticar: " + err.message;
+                feedback.className = "status-msg status-error";
+            }
         }
 
         function cerrarSesion() {
+            usuarioActual = null;
             document.getElementById('dashboardView').classList.add('hidden');
             document.getElementById('bottomNavBar').classList.add('hidden');
             document.getElementById('authView').classList.remove('hidden');
@@ -543,22 +576,23 @@
         }
 
         function switchDashboardTab(tabName) {
-    document.querySelectorAll('.dashboard-tab').forEach(tab => tab.classList.add('hidden'));
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.dashboard-tab').forEach(tab => tab.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-    if (tabName === 'home') {
-        document.getElementById('tabHome').classList.remove('hidden');
-        document.getElementById('navHomeBtn').classList.add('active');
-    } else if (tabName === 'standings') {
-        document.getElementById('tabStandings').classList.remove('hidden');
-        document.getElementById('navStandingsBtn').classList.add('active');
-    } else if (tabName === 'account') {
-        document.getElementById('tabAccount').classList.remove('hidden');
-        document.getElementById('navAccountBtn').classList.add('active');
-    } else if (tabName === 'info' || tabName === 'Info') {
-        document.getElementById('tabInfo').classList.remove('hidden');
-        document.getElementById('navInfoBtn').classList.add('active');
-    }
+            const lowerTab = tabName.toLowerCase();
+            if (lowerTab === 'home') {
+                document.getElementById('tabHome').classList.remove('hidden');
+                document.getElementById('navHomeBtn').classList.add('active');
+            } else if (lowerTab === 'standings') {
+                document.getElementById('tabStandings').classList.remove('hidden');
+                document.getElementById('navStandingsBtn').classList.add('active');
+            } else if (lowerTab === 'account') {
+                document.getElementById('tabAccount').classList.remove('hidden');
+                document.getElementById('navAccountBtn').classList.add('active');
+            } else if (lowerTab === 'info') {
+                document.getElementById('tabInfo').classList.remove('hidden');
+                document.getElementById('navInfoBtn').classList.add('active');
+            }
         }
 
         function switchStandingsSub(subType) {
@@ -589,7 +623,9 @@
                 calendar.forEach(race => {
                     const option = document.createElement('option');
                     option.value = race.round;
-                    option.dataset.isSprint = race.sprint || false;
+                    // Compatible con distintas nomenclaturas del calendar.json (sprint o isSprint)
+                    const hasSprint = race.sprint === true || race.isSprint === true;
+                    option.dataset.isSprint = hasSprint ? 'true' : 'false';
                     option.textContent = `Ronda ${race.round}: ${race.name} (${race.date})`;
                     selectRace.appendChild(option);
 
@@ -626,7 +662,6 @@
                 return;
             }
 
-            // Espacio reservado para inyectar la consulta dinámica de Supabase/Base de datos
             breakdownBox.innerHTML = `
                 <div style="text-align: center; color: var(--f1-turquesa); padding: 5px;">
                     [ Consultando registros del GP #${selectedVal} en base de datos... ]
@@ -634,8 +669,52 @@
             `;
         }
 
-        function guardarPrediccion() {
-            alert("¡Predicción guardada correctamente con validación independiente de Pole y Carrera!");
+        // Guardado asíncrono con confirmación real de Supabase
+        async function guardarPrediccion() {
+            const feedback = document.getElementById('predictionFeedback');
+            const round = document.getElementById('raceSelect').value;
+            const pole = document.getElementById('poleSelect').value;
+
+            if (!round) {
+                feedback.textContent = "Selecciona un Gran Premio antes de guardar.";
+                feedback.className = "status-msg status-error";
+                return;
+            }
+
+            const raceSlots = document.querySelectorAll('.race-slot');
+            const racePicks = Array.from(raceSlots).map(s => s.value);
+
+            const sprintSlots = document.querySelectorAll('.sprint-slot');
+            const sprintPicks = Array.from(sprintSlots).map(s => s.value);
+
+            const datosPrediccion = {
+                username: usuarioActual,
+                round: parseInt(round),
+                pole_driver: pole,
+                p1_driver: racePicks[0] || null,
+                p2_driver: racePicks[1] || null,
+                p3_driver: racePicks[2] || null,
+                p4_driver: racePicks[3] || null,
+                p5_driver: racePicks[4] || null,
+                sprint_p1: sprintPicks[0] || null,
+                sprint_p2: sprintPicks[1] || null,
+                sprint_p3: sprintPicks[2] || null
+            };
+
+            try {
+                // Inserción o actualización real en la tabla de predicciones en Supabase
+                const { data, error } = await supabase
+                    .from('predicciones')
+                    .upsert([datosPrediccion], { onConflict: 'username, round' });
+
+                if (error) throw error;
+
+                feedback.textContent = "¡Predicción guardada y confirmada en Supabase con éxito!";
+                feedback.className = "status-msg status-success";
+            } catch (err) {
+                feedback.textContent = "Error al guardar en Supabase: " + err.message;
+                feedback.className = "status-msg status-error";
+            }
         }
     </script>
 </body>
