@@ -294,10 +294,10 @@
             <h3 id="authTitle">Iniciar Sesión</h3>
             <form id="authForm" onsubmit="manejarAutenticacionGeneral(event)">
                 
-                <!-- Campos específicos de Registro (Ocultos por defecto en Login) -->
+                <!-- Campos específicos de Registro -->
                 <div id="registroCamposExtra" class="hidden">
                     <label>Nombre de Usuario / Apodo</label>
-                    <input type="text" id="reg-username" placeholder="Ej. ElvisFH">
+                    <input type="text" id="reg-username" placeholder="Ej. isCodeMan">
 
                     <label>País de Origen</label>
                     <select id="reg-pais">
@@ -331,7 +331,7 @@
                 <label>Contraseña</label>
                 <input type="password" id="authPassword" placeholder="••••••••" required>
 
-                <!-- Confirmar Contraseña (Solo para Registro) -->
+                <!-- Confirmar Contraseña (Solo Registro) -->
                 <div id="registroPasswordConfirmExtra" class="hidden">
                     <label>Confirmar Contraseña</label>
                     <input type="password" id="reg-password-confirm" placeholder="Repite tu contraseña">
@@ -351,7 +351,7 @@
                 
                 <div class="app-download-mini">
                     <p>Lleva el Fantasy en tu móvil Android.</p>
-                    <a href="https://github.com/tu-usuario/tu-repositorio/releases/latest/download/app-release.apk" class="btn-action btn-turquesa" style="width: auto; padding: 8px 12px; font-size: 0.75em;">
+                    <a href="#" class="btn-action btn-turquesa" style="width: auto; padding: 8px 12px; font-size: 0.75em;">
                         APK ⚡
                     </a>
                 </div>
@@ -486,7 +486,7 @@
     </nav>
 
     <script>
-        // Inicialización segura de Supabase integrada para evitar fallos de carga externa
+        // Inicialización directa de Supabase con tus credenciales
         const SUPABASE_URL = 'https://tobebpyymtwchqjfchip.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_F-J01J3ktvXhYofc3N0eYA_lhhKBwWB';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -498,6 +498,7 @@
         async function inicializarApp() {
             await cargarPilotos2026();
             await cargarCalendario();
+            await cargarStandingsIndividuales();
         }
 
         async function cargarPilotos2026() {
@@ -600,6 +601,7 @@
             }
         }
 
+        // Manejador unificado para Login o Registro completo sincronizado
         async function manejarAutenticacionGeneral(event) {
             event.preventDefault();
             const email = document.getElementById('authEmail').value;
@@ -617,6 +619,7 @@
                     const username = document.getElementById('reg-username').value;
                     const pais = document.getElementById('reg-pais').value;
 
+                    // 1. Registro en Supabase Auth
                     const { data: authData, error: authError } = await supabase.auth.signUp({
                         email: email,
                         password: password
@@ -625,6 +628,7 @@
 
                     const userId = authData.user ? authData.user.id : null;
 
+                    // 2. Inserción del perfil vinculado en la tabla 'usuarios'
                     const { error: profileError } = await supabase
                         .from('usuarios')
                         .insert([
@@ -642,6 +646,7 @@
                     usuarioActual = email;
                     alert("¡Registro exitoso, socio! Bienvenido a Podium Fantasy F1.");
                 } else {
+                    // Inicio de sesión normal
                     const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
                         email: email,
                         password: password
@@ -683,6 +688,7 @@
             } else if (lowerTab === 'standings') {
                 document.getElementById('tabStandings').classList.remove('hidden');
                 document.getElementById('navStandingsBtn').classList.add('active');
+                cargarStandingsIndividuales();
             } else if (lowerTab === 'account') {
                 document.getElementById('tabAccount').classList.remove('hidden');
                 document.getElementById('navAccountBtn').classList.add('active');
@@ -701,9 +707,46 @@
             if (subType === 'individual') {
                 document.getElementById('subIndBtn').classList.add('active');
                 document.getElementById('subStandingsIndividual').classList.remove('hidden');
+                cargarStandingsIndividuales();
             } else {
                 document.getElementById('subEscBtn').classList.add('active');
                 document.getElementById('subStandingsEscuderias').classList.remove('hidden');
+            }
+        }
+
+        async function cargarStandingsIndividuales() {
+            const container = document.getElementById('dbIndividualContainer');
+            container.innerHTML = '<p style="color: var(--f1-turquesa); text-align: center; margin: 0;">Cargando ranking...</p>';
+
+            try {
+                const { data: usuarios, error } = await supabase
+                    .from('usuarios')
+                    .select('username, pais, puntos_globales')
+                    .order('puntos_globales', { ascending: false });
+
+                if (error) throw error;
+
+                if (!usuarios || usuarios.length === 0) {
+                    container.innerHTML = '<p style="color: #aaa; text-align: center; margin: 0;">No hay usuarios registrados todavía.</p>';
+                    return;
+                }
+
+                let html = '<table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85em;">';
+                html += '<tr style="border-bottom: 1px solid #3e444d; color: var(--f1-papaya);"><th style="padding: 6px;">Pos</th><th style="padding: 6px;">Usuario</th><th style="padding: 6px;">País</th><th style="padding: 6px; text-align: right;">Puntos</th></tr>';
+                
+                usuarios.forEach((u, index) => {
+                    html += `<tr style="border-bottom: 1px solid #252b33;">
+                        <td style="padding: 8px;">#${index + 1}</td>
+                        <td style="padding: 8px; color: var(--white); font-weight: bold;">${u.username || 'Sin apodo'}</td>
+                        <td style="padding: 8px;">${u.pais || '-'}</td>
+                        <td style="padding: 8px; text-align: right; color: var(--f1-turquesa); font-weight: bold;">${u.puntos_globales || 0} pts</td>
+                    </tr>`;
+                });
+                html += '</table>';
+
+                container.innerHTML = html;
+            } catch (err) {
+                container.innerHTML = `<p style="color: var(--danger); text-align: center; margin: 0;">Error al cargar standings: ${err.message}</p>`;
             }
         }
 
@@ -765,41 +808,48 @@
             `;
         }
 
+        // Guardado de predicción enlazado correctamente con 'usuario_id' y 'gran_premio'
         async function guardarPrediccion() {
             const feedback = document.getElementById('predictionFeedback');
-            const round = document.getElementById('raceSelect').value;
+            const selectRace = document.getElementById('raceSelect');
+            const selectedOption = selectRace.options[selectRace.selectedIndex];
+            
+            const granPremioNombre = selectedOption ? selectedOption.textContent.split(': ')[1]?.split(' (')[0] : null; 
             const pole = document.getElementById('poleSelect').value;
 
-            if (!round) {
-                feedback.textContent = "Selecciona un Gran Premio antes de guardar.";
+            if (!selectRace.value || !granPremioNombre) {
+                feedback.textContent = "Selecciona un Gran Premio válido antes de guardar.";
                 feedback.className = "status-msg status-error";
                 return;
             }
 
-            const raceSlots = document.querySelectorAll('.race-slot');
-            const racePicks = Array.from(raceSlots).map(s => s.value);
-
-            const sprintSlots = document.querySelectorAll('.sprint-slot');
-            const sprintPicks = Array.from(sprintSlots).map(s => s.value);
-
-            const datosPrediccion = {
-                username: usuarioActual,
-                round: parseInt(round),
-                pole_driver: pole,
-                p1_driver: racePicks[0] || null,
-                p2_driver: racePicks[1] || null,
-                p3_driver: racePicks[2] || null,
-                p4_driver: racePicks[3] || null,
-                p5_driver: racePicks[4] || null, // Corregido el error tipográfico anterior
-                sprint_p1: sprintPicks[0] || null,
-                sprint_p2: sprintPicks[1] || null,
-                sprint_p3: sprintPicks[2] || null
-            };
-
             try {
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) throw new Error("No hay una sesión activa.");
+
+                const raceSlots = document.querySelectorAll('.race-slot');
+                const racePicks = Array.from(raceSlots).map(s => s.value);
+
+                const sprintSlots = document.querySelectorAll('.sprint-slot');
+                const sprintPicks = Array.from(sprintSlots).map(s => s.value);
+
+                const datosPrediccion = {
+                    usuario_id: user.id,
+                    gran_premio: granPremioNombre.trim(),
+                    poleman: pole || null,
+                    carrera_p1: racePicks[0] || null,
+                    carrera_p2: racePicks[1] || null,
+                    carrera_p3: racePicks[2] || null,
+                    carrera_p4: racePicks[3] || null,
+                    carrera_p5: racePicks[4] || null,
+                    sprint_p1: sprintPicks[0] || null,
+                    sprint_p2: sprintPicks[1] || null,
+                    sprint_p3: sprintPicks[2] || null
+                };
+
                 const { data, error } = await supabase
                     .from('predicciones')
-                    .upsert([datosPrediccion], { onConflict: 'username, round' });
+                    .upsert([datosPrediccion], { onConflict: 'usuario_id, gran_premio' });
 
                 if (error) throw error;
 
