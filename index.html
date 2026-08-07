@@ -12,6 +12,8 @@
 
     <!-- SDK de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Script de Conexión Independiente -->
+    <script src="./connect_login.js"></script>
 
     <style>
         :root {
@@ -225,15 +227,15 @@
         .sub-tab-container {
             display: flex;
             gap: 5px;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
         .sub-tab-btn {
             flex: 1;
-            padding: 8px;
+            padding: 10px;
             background: #101317;
             border: 1px solid #3e444d;
             color: #aaa;
-            font-size: 0.75em;
+            font-size: 0.8em;
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
@@ -246,15 +248,6 @@
         }
 
         .hidden { display: none !important; }
-
-        .auth-switch {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 0.8em;
-            color: var(--f1-turquesa);
-            cursor: pointer;
-            text-decoration: underline;
-        }
 
         .sprint-accordion {
             background: #101317;
@@ -289,57 +282,71 @@
 
     <div class="container">
 
-        <!-- AUTENTICACIÓN / REGISTRO COMPLETO -->
+        <!-- VISTA DE AUTENTICACIÓN / PESTAÑAS CLARAS DE LOGIN Y REGISTRO -->
         <div id="authView" class="card-box">
-            <h3 id="authTitle">Iniciar Sesión</h3>
-            <form id="authForm" onsubmit="manejarAutenticacionGeneral(event)">
-                
-                <!-- Campos específicos de Registro -->
-                <div id="registroCamposExtra" class="hidden">
-                    <label>Nombre de Usuario / Apodo</label>
-                    <input type="text" id="reg-username" placeholder="Ej. isCodeMan">
+            
+            <!-- Pestañas Superiores Visibles -->
+            <div class="sub-tab-container">
+                <button class="sub-tab-btn active" id="tabLoginBtn" onclick="cambiarModoAuth('login')">Iniciar Sesión</button>
+                <button class="sub-tab-btn" id="tabRegisterBtn" onclick="cambiarModoAuth('register')">Registrarse</button>
+            </div>
 
-                    <label>País de Origen</label>
-                    <select id="reg-pais">
-                        <option value="">Selecciona tu país</option>
-                        <option value="VE">🇻🇪 Venezuela</option>
-                        <option value="ES">🇪🇸 España</option>
-                        <option value="MX">🇲🇽 México</option>
-                        <option value="AR">🇦🇷 Argentina</option>
-                        <option value="CO">🇨🇴 Colombia</option>
-                        <option value="CL">🇨🇱 Chile</option>
-                        <option value="PE">🇵🇪 Perú</option>
-                        <option value="UY">🇺🇾 Uruguay</option>
-                        <option value="EC">🇪🇨 Ecuador</option>
-                        <option value="BR">🇧🇷 Brasil</option>
-                        <option value="CR">🇨🇷 Costa Rica</option>
-                        <option value="PA">🇵🇦 Panamá</option>
-                        <option value="DO">🇩🇴 Rep. Dominicana</option>
-                        <option value="CU">🇨🇺 Cuba</option>
-                        <option value="BO">🇧🇴 Bolivia</option>
-                        <option value="PY">🇵🇾 Paraguay</option>
-                        <option value="GT">🇬🇹 Guatemala</option>
-                        <option value="HN">🇭🇳 Honduras</option>
-                        <option value="SV">🇸🇻 El Salvador</option>
-                        <option value="NI">🇳🇮 Nicaragua</option>
-                    </select>
-                </div>
-
-                <label>Correo Electrónico</label>
-                <input type="email" id="authEmail" placeholder="correo@dominio.com" required>
+            <!-- FORMULARIO DE INICIO DE SESIÓN -->
+            <form id="formLogin" onsubmit="procesarLogin(event)">
+                <h3>Acceso de Usuario</h3>
+                <label>email</label>
+                <input type="email" id="loginEmail" placeholder="usuario@dominio.com" required>
 
                 <label>Contraseña</label>
-                <input type="password" id="authPassword" placeholder="••••••••" required>
+                <input type="password" id="loginPassword" placeholder="••••••••" required>
 
-                <!-- Confirmar Contraseña (Solo Registro) -->
-                <div id="registroPasswordConfirmExtra" class="hidden">
-                    <label>Confirmar Contraseña</label>
-                    <input type="password" id="reg-password-confirm" placeholder="Repite tu contraseña">
-                </div>
-
-                <button type="submit" id="authBtn" class="btn-action" style="margin-top: 10px;">Entrar</button>
+                <button type="submit" class="btn-action" style="margin-top: 10px;">Entrar</button>
             </form>
-            <div class="auth-switch" onclick="toggleAuthMode()">¿No tienes cuenta? Regístrate aquí</div>
+
+            <!-- FORMULARIO DE REGISTRO COMPLETO (VISIBLE AL SELECCIONAR LA PESTAÑA) -->
+            <form id="formRegister" class="hidden" onsubmit="procesarRegistro(event)">
+                <h3>Crear Nueva Cuenta</h3>
+
+                <label>Nombre de Usuario / Apodo</label>
+                <input type="text" id="reg-username" placeholder="User" required>
+
+                <label>País de Origen</label>
+                <select id="reg-pais" required>
+                    <option value="">Selecciona tu país</option>
+                    <option value="VE">🇻🇪 Venezuela</option>
+                    <option value="ES">🇪🇸 España</option>
+                    <option value="MX">🇲🇽 México</option>
+                    <option value="AR">🇦🇷 Argentina</option>
+                    <option value="CO">🇨🇴 Colombia</option>
+                    <option value="CL">🇨🇱 Chile</option>
+                    <option value="PE">🇵🇪 Perú</option>
+                    <option value="UY">🇺🇾 Uruguay</option>
+                    <option value="EC">🇨🇱 Ecuador</option>
+                    <option value="BR">🇧🇷 Brasil</option>
+                    <option value="CR">🇨🇷 Costa Rica</option>
+                    <option value="PA">🇵🇦 Panamá</option>
+                    <option value="DO">🇩🇴 Rep. Dominicana</option>
+                    <option value="CU">🇨🇺 Cuba</option>
+                    <option value="BO">🇧🇴 Bolivia</option>
+                    <option value="PY">🇵🇾 Paraguay</option>
+                    <option value="GT">🇬🇹 Guatemala</option>
+                    <option value="HN">🇭🇳 Honduras</option>
+                    <option value="SV">🇸🇻 El Salvador</option>
+                    <option value="NI">🇳🇮 Nicaragua</option>
+                </select>
+
+                <label>email</label>
+                <input type="email" id="reg-email" placeholder="usuario@dominio.com" required>
+
+                <label>Contraseña</label>
+                <input type="password" id="reg-password" placeholder="••••••••" required>
+
+                <label>Confirmar Contraseña</label>
+                <input type="password" id="reg-password-confirm" placeholder="Repite tu contraseña" required>
+
+                <button type="submit" class="btn-action btn-turquesa" style="margin-top: 10px;">Registrarse</button>
+            </form>
+
             <div id="authFeedback" class="hidden"></div>
         </div>
 
@@ -486,14 +493,10 @@
     </nav>
 
     <script>
-        // Inicialización directa de Supabase con tus credenciales
-        const SUPABASE_URL = 'https://tobebpyymtwchqjfchip.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_F-J01J3ktvXhYofc3N0eYA_lhhKBwWB';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let isRegistering = false;
         let driversList = [];
         let usuarioActual = null;
+        let userIdActual = null;
+        let calendarData = [];
 
         async function inicializarApp() {
             await cargarPilotos2026();
@@ -577,103 +580,117 @@
             });
         }
 
-        function toggleAuthMode() {
-            isRegistering = !isRegistering;
-            document.getElementById('authTitle').innerText = isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión';
-            document.getElementById('authBtn').innerText = isRegistering ? 'Registrarse' : 'Entrar';
-            document.querySelector('.auth-switch').innerText = isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí';
-            
-            const extraFields = document.getElementById('registroCamposExtra');
-            const confirmPassField = document.getElementById('registroPasswordConfirmExtra');
-            
-            if (isRegistering) {
-                extraFields.classList.remove('hidden');
-                confirmPassField.classList.remove('hidden');
-                document.getElementById('reg-username').required = true;
-                document.getElementById('reg-pais').required = true;
-                document.getElementById('reg-password-confirm').required = true;
+        // Cambio visual limpio entre pestañas de Login y Registro
+        function cambiarModoAuth(modo) {
+            const btnLogin = document.getElementById('tabLoginBtn');
+            const btnRegister = document.getElementById('tabRegisterBtn');
+            const formLogin = document.getElementById('formLogin');
+            const formRegister = document.getElementById('formRegister');
+            const feedback = document.getElementById('authFeedback');
+            feedback.className = "hidden";
+
+            if (modo === 'login') {
+                btnLogin.classList.add('active');
+                btnRegister.classList.remove('active');
+                formLogin.classList.remove('hidden');
+                formRegister.classList.add('hidden');
             } else {
-                extraFields.classList.add('hidden');
-                confirmPassField.classList.add('hidden');
-                document.getElementById('reg-username').required = false;
-                document.getElementById('reg-pais').required = false;
-                document.getElementById('reg-password-confirm').required = false;
+                btnRegister.classList.add('active');
+                btnLogin.classList.remove('active');
+                formRegister.classList.remove('hidden');
+                formLogin.classList.add('hidden');
             }
         }
 
-        // Manejador unificado para Login o Registro completo sincronizado
-        async function manejarAutenticacionGeneral(event) {
+        // Lógica de Registro Sincronizada con la tabla 'usuarios'
+        async function procesarRegistro(event) {
             event.preventDefault();
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const passwordConfirm = document.getElementById('reg-password-confirm').value;
+            const username = document.getElementById('reg-username').value;
+            const pais = document.getElementById('reg-pais').value;
             const feedback = document.getElementById('authFeedback');
             feedback.className = "hidden";
 
             try {
-                if (isRegistering) {
-                    const passwordConfirm = document.getElementById('reg-password-confirm').value;
-                    if (password !== passwordConfirm) {
-                        throw new Error("Las contraseñas no coinciden.");
-                    }
-
-                    const username = document.getElementById('reg-username').value;
-                    const pais = document.getElementById('reg-pais').value;
-
-                    // 1. Registro en Supabase Auth
-                    const { data: authData, error: authError } = await supabase.auth.signUp({
-                        email: email,
-                        password: password
-                    });
-                    if (authError) throw authError;
-
-                    const userId = authData.user ? authData.user.id : null;
-
-                    // 2. Inserción del perfil vinculado en la tabla 'usuarios'
-                    const { error: profileError } = await supabase
-                        .from('usuarios')
-                        .insert([
-                            {
-                                id: userId,
-                                username: username,
-                                pais: pais,
-                                idioma_preferido: 'es',
-                                puntos_globales: 0,
-                                escuderia_id: null
-                            }
-                        ]);
-                    if (profileError) throw profileError;
-
-                    usuarioActual = email;
-                    alert("¡Registro exitoso, socio! Bienvenido a Podium Fantasy F1.");
-                } else {
-                    // Inicio de sesión normal
-                    const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-                        email: email,
-                        password: password
-                    });
-                    if (loginError) throw loginError;
-
-                    usuarioActual = email;
+                if (password !== passwordConfirm) {
+                    throw new Error("Las contraseñas no coinciden.");
                 }
 
-                document.getElementById('userEmailDisplay').innerText = usuarioActual;
-                document.getElementById('authView').classList.add('hidden');
-                document.getElementById('dashboardView').classList.remove('hidden');
-                document.getElementById('bottomNavBar').classList.remove('hidden');
-                await inicializarApp();
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: email,
+                    password: password
+                });
+                if (authError) throw authError;
+
+                userIdActual = authData.user ? authData.user.id : null;
+
+                const { error: profileError } = await supabase
+                    .from('usuarios')
+                    .insert([
+                        {
+                            id: userIdActual,
+                            username: username,
+                            pais: pais,
+                            idioma_preferido: 'es',
+                            puntos_globales: 0,
+                            escuderia_id: null
+                        }
+                    ]);
+                if (profileError) throw profileError;
+
+                usuarioActual = email;
+                alert("¡Registro exitoso, socio! Bienvenido a Podium Fantasy F1.");
+                entrarAlSistema(email);
 
             } catch (err) {
-                feedback.textContent = "Error: " + err.message;
+                feedback.textContent = "Error en el registro: " + err.message;
                 feedback.className = "status-msg status-error";
             }
         }
 
+        // Lógica de Inicio de Sesión
+        async function procesarLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const feedback = document.getElementById('authFeedback');
+            feedback.className = "hidden";
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                if (error) throw error;
+
+                userIdActual = data.user ? data.user.id : null;
+                usuarioActual = email;
+                entrarAlSistema(email);
+
+            } catch (err) {
+                feedback.textContent = "Error al iniciar sesión: " + err.message;
+                feedback.className = "status-msg status-error";
+            }
+        }
+
+        function entrarAlSistema(email) {
+            document.getElementById('userEmailDisplay').innerText = email;
+            document.getElementById('authView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.remove('hidden');
+            document.getElementById('bottomNavBar').classList.remove('hidden');
+            inicializarApp();
+        }
+
         function cerrarSesion() {
             usuarioActual = null;
+            userIdActual = null;
             supabase.auth.signOut();
             document.getElementById('dashboardView').classList.add('hidden');
             document.getElementById('bottomNavBar').classList.add('hidden');
             document.getElementById('authView').classList.remove('hidden');
+            cambiarModoAuth('login');
             switchDashboardTab('home');
         }
 
@@ -753,18 +770,19 @@
         async function cargarCalendario() {
             try {
                 const response = await fetch('./calendar.json');
-                const calendar = await response.json();
+                calendarData = await response.json();
                 const selectRace = document.getElementById('raceSelect');
                 const historySelect = document.getElementById('gpHistorySelect');
                 
                 selectRace.innerHTML = '<option value="">Selecciona un Gran Premio</option>';
                 historySelect.innerHTML = '<option value="">Selecciona un GP para consultar</option>';
                 
-                calendar.forEach(race => {
+                calendarData.forEach(race => {
                     const option = document.createElement('option');
                     option.value = race.round;
                     const hasSprint = race.sprint === true || race.isSprint === true;
                     option.dataset.isSprint = hasSprint ? 'true' : 'false';
+                    option.dataset.gpName = race.name;
                     option.textContent = `Ronda ${race.round}: ${race.name} (${race.date})`;
                     selectRace.appendChild(option);
 
@@ -808,45 +826,42 @@
             `;
         }
 
-        // Guardado de predicción enlazado correctamente con 'usuario_id' y 'gran_premio'
         async function guardarPrediccion() {
             const feedback = document.getElementById('predictionFeedback');
             const selectRace = document.getElementById('raceSelect');
+            const selectedRound = selectRace.value;
             const selectedOption = selectRace.options[selectRace.selectedIndex];
-            
-            const granPremioNombre = selectedOption ? selectedOption.textContent.split(': ')[1]?.split(' (')[0] : null; 
             const pole = document.getElementById('poleSelect').value;
 
-            if (!selectRace.value || !granPremioNombre) {
-                feedback.textContent = "Selecciona un Gran Premio válido antes de guardar.";
+            if (!selectedRound) {
+                feedback.textContent = "Selecciona un Gran Premio antes de guardar.";
                 feedback.className = "status-msg status-error";
                 return;
             }
 
+            const nombreGP = selectedOption.dataset.gpName || selectedOption.textContent;
+
+            const raceSlots = document.querySelectorAll('.race-slot');
+            const racePicks = Array.from(raceSlots).map(s => s.value);
+
+            const sprintSlots = document.querySelectorAll('.sprint-slot');
+            const sprintPicks = Array.from(sprintSlots).map(s => s.value);
+
+            const datosPrediccion = {
+                usuario_id: userIdActual,
+                gran_premio: nombreGP,
+                poleman: pole || null,
+                carrera_p1: racePicks[0] || null,
+                carrera_p2: racePicks[1] || null,
+                carrera_p3: racePicks[2] || null,
+                carrera_p4: racePicks[3] || null,
+                carrera_p5: racePicks[4] || null,
+                sprint_p1: sprintPicks[0] || null,
+                sprint_p2: sprintPicks[1] || null,
+                sprint_p3: sprintPicks[2] || null
+            };
+
             try {
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
-                if (userError || !user) throw new Error("No hay una sesión activa.");
-
-                const raceSlots = document.querySelectorAll('.race-slot');
-                const racePicks = Array.from(raceSlots).map(s => s.value);
-
-                const sprintSlots = document.querySelectorAll('.sprint-slot');
-                const sprintPicks = Array.from(sprintSlots).map(s => s.value);
-
-                const datosPrediccion = {
-                    usuario_id: user.id,
-                    gran_premio: granPremioNombre.trim(),
-                    poleman: pole || null,
-                    carrera_p1: racePicks[0] || null,
-                    carrera_p2: racePicks[1] || null,
-                    carrera_p3: racePicks[2] || null,
-                    carrera_p4: racePicks[3] || null,
-                    carrera_p5: racePicks[4] || null,
-                    sprint_p1: sprintPicks[0] || null,
-                    sprint_p2: sprintPicks[1] || null,
-                    sprint_p3: sprintPicks[2] || null
-                };
-
                 const { data, error } = await supabase
                     .from('predicciones')
                     .upsert([datosPrediccion], { onConflict: 'usuario_id, gran_premio' });
