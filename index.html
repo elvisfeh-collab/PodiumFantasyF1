@@ -861,6 +861,23 @@
                 // ... (éxito)
             } catch (err) { /*...*/ }
         }
+	function entrarAlSistema(email) {
+    // 1. Ocultar la vista de Login/Registro y mostrar el Dashboard
+    document.getElementById('authView').classList.add('hidden');
+    document.getElementById('dashboardView').classList.remove('hidden');
+    document.getElementById('bottomNavBar').classList.remove('hidden');
+
+    // 2. Mostrar el correo del usuario en la pestaña de cuenta
+    const display = document.getElementById('userEmailDisplay');
+    if(display) display.textContent = email;
+
+    // 3. Limpiar los formularios por seguridad
+    document.getElementById('formLogin').reset();
+    document.getElementById('formRegister').reset();
+
+    // 4. Asegurarnos de iniciar en la pestaña 'home'
+    switchDashboardTab('home');
+}
     </script>
 </body>
 </html>
