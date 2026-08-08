@@ -1,7 +1,9 @@
-// Inicializa Supabase con tus credenciales de tu proyecto
+// Inicializa Supabase con tus credenciales de tu proyecto evitando colisiones globales
 const SUPABASE_URL = 'https://tobebpyymtwchqjfchip.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_F-J01J3ktvXhYofc3N0eYA_lhhKBwWB';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Usamos un nombre de instancia único para el cliente
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Función para registrar un nuevo usuario
 async function manejarRegistro(event) {
