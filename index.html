@@ -306,8 +306,8 @@
             <!-- FORMULARIO DE REGISTRO COMPLETO (VISIBLE AL SELECCIONAR LA PESTAÑA) -->
             <form id="formRegister" class="hidden" onsubmit="procesarRegistro(event)">
                 <h3>Crear Nueva Cuenta</h3>
-                
-                <label>email</label>
+
+                  <label>email</label>
                 <input type="email" id="reg-email" placeholder="usuario@dominio.com" required>
 
                 <label>Contraseña</label>
@@ -340,6 +340,7 @@
                     <option value="SV">🇸🇻 El Salvador</option>
                     <option value="NI">🇳🇮 Nicaragua</option>
                 </select>
+
 
                 <button type="submit" class="btn-action btn-turquesa" style="margin-top: 10px;">Registrarse</button>
             </form>
@@ -601,51 +602,53 @@
 
         // Lógica de Registro Sincronizada con la tabla 'usuarios'
         async function procesarRegistro(event) {
-            event.preventDefault();
-            const email = document.getElementById('reg-email').value;
-            const password = document.getElementById('reg-password').value;
-            const passwordConfirm = document.getElementById('reg-password-confirm').value;
-            const username = document.getElementById('reg-username').value;
-            const pais = document.getElementById('reg-pais').value;
-            const feedback = document.getElementById('authFeedback');
-            feedback.className = "hidden";
+    event.preventDefault();
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    const passwordConfirm = document.getElementById('reg-password-confirm').value;
+    const pais = document.getElementById('reg-pais').value;
+    const feedback = document.getElementById('authFeedback');
+    feedback.className = "hidden";
 
-            try {
-                if (password !== passwordConfirm) {
-                    throw new Error("Las contraseñas no coinciden.");
-                }
-
-                const { data: authData, error: authError } = await supabase.auth.signUp({
-                    email: email,
-                    password: password
-                });
-                if (authError) throw authError;
-
-                userIdActual = authData.user ? authData.user.id : null;
-
-                const { error: profileError } = await supabase
-                    .from('usuarios')
-                    .insert([
-                        {
-                            id: userIdActual,
-                            username: username,
-                            pais: pais,
-                            idioma_preferido: 'es',
-                            puntos_globales: 0,
-                            escuderia_id: null
-                        }
-                    ]);
-                if (profileError) throw profileError;
-
-                usuarioActual = email;
-                alert("¡Registro exitoso, socio! Bienvenido a Podium Fantasy F1.");
-                entrarAlSistema(email);
-
-            } catch (err) {
-                feedback.textContent = "Error en el registro: " + err.message;
-                feedback.className = "status-msg status-error";
-            }
+    try {
+        if (password !== passwordConfirm) {
+            throw new Error("Las contraseñas no coinciden.");
         }
+
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: email,
+            password: password
+        });
+        if (authError) throw authError;
+
+        userIdActual = authData.user ? authData.user.id : null;
+
+        // Asignamos una parte del correo como username provisional para evitar el error de la base de datos
+        const usernameProvisional = email.split('@')[0];
+
+        const { error: profileError } = await supabase
+            .from('usuarios')
+            .insert([
+                {
+                    id: userIdActual,
+                    username: usernameProvisional,
+                    pais: pais,
+                    idioma_preferido: 'es',
+                    puntos_globales: 0,
+                    escuderia_id: null
+                }
+            ]);
+        if (profileError) throw profileError;
+
+        usuarioActual = email;
+        alert("¡Registro exitoso, socio! Bienvenido a Podium Fantasy F1.");
+        entrarAlSistema(email);
+
+    } catch (err) {
+        feedback.textContent = "Error en el registro: " + err.message;
+        feedback.className = "status-msg status-error";
+    }
+}
 
         // Lógica de Inicio de Sesión
         async function procesarLogin(event) {
