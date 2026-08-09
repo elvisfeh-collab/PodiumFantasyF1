@@ -54,9 +54,24 @@ def main():
         for reg in registros_predicciones:
             usuario_id = reg.get("usuario_id")
             
-            # (Aquí procesas las predicciones según la sesión: quali, sprint o carrera)
-            # ...
-            pts = points_logic.motor_calculo_puntos_oficial(...)
+            # Extraer el texto de la predicción según la sesión activa
+            if sesion == "quali":
+                pred_text = reg.get("poleman")
+            elif sesion == "sprint":
+                p1 = reg.get("sprint_p1") or ""
+                p2 = reg.get("sprint_p2") or ""
+                p3 = reg.get("sprint_p3") or ""
+                pred_text = f"{p1},{p2},{p3}"
+            else: # carrera
+                p1 = reg.get("carrera_p1") or ""
+                p2 = reg.get("carrera_p2") or ""
+                p3 = reg.get("carrera_p3") or ""
+                p4 = reg.get("carrera_p4") or ""
+                p5 = reg.get("carrera_p5") or ""
+                pred_text = f"{p1},{p2},{p3},{p4},{p5}"
+            
+            # Ejecutar el motor de cálculo oficial
+            pts = points_logic.motor_calculo_puntos_oficial(pred_text, clean_data, limite_puestos)
             
             print(f"👤 Usuario ID {usuario_id} | Sesión {sesion} -> Puntos: {pts}")
 
@@ -67,8 +82,6 @@ def main():
                 "carrera": "puntos_carrera"
             }.get(sesion, "puntos_carrera")
 
-            # Hacemos un upsert inteligente en puntuaciones_gp
-            # Primero consultamos si ya existe registro para este usuario y GP, o usamos la función de incremento de Supabase
             datos_actualizacion = {
                 "usuario_id": usuario_id,
                 "gran_premio": gp_nombre,
@@ -80,10 +93,10 @@ def main():
                 on_conflict="usuario_id,gran_premio"
             ).execute()
 
-            # 6. Inyección a la tabla correspondiente en Supabase
+            # 7. Inyección a la tabla histórica correspondiente en Supabase
             tabla_destino = f"resultados_{sesion}"
             fila_registro = {
-                "user_id": user_id,
+                "usuario_id": usuario_id,  # Corregido de user_id a usuario_id
                 "gran_premio": gp_nombre,
                 "sesion": sesion,
                 "puntos_usuario": pts,
@@ -91,12 +104,6 @@ def main():
             }
             
             supabase.table(tabla_destino).upsert(fila_registro).execute()
-
-        print("✅ ¡ÉXITO TOTAL: Ciclo de procesamiento y actualización completado!")
-
-    except Exception as e:
-        print(f"❌ Error crítico en el flujo principal: {e}")
-        sys.exit(1)
 
 if __name__ == "__main__":
     main()
