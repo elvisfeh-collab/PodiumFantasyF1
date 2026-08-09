@@ -513,13 +513,14 @@
 
        async function cargarPilotos2026() {
     try {
-        const response = await fetch('./drivers.json');
-        if (!response.ok) throw new Error('No se pudo cargar el archivo de pilotos');
-        driversList = await response.json();
+        const { data, error } = await supabaseClient
+            .from('drivers2026')
+            .select('*');
+        if (error) throw error;
+        driversList = data;
         poblarSelectoresPilotos();
     } catch (e) {
-        console.error("Error cargando drivers.json:", e);
-        // Opcional: poner un mensaje de error en la UI si falla la carga
+        console.error("Error cargando pilotos desde Supabase:", e);
     }
 }
 
@@ -747,31 +748,37 @@
         }
 
         async function cargarCalendario() {
-            try {
-                const response = await fetch('./calendar.json');
-                calendarData = await response.json();
-                const selectRace = document.getElementById('raceSelect');
-                const historySelect = document.getElementById('gpHistorySelect');
-                
-                selectRace.innerHTML = '<option value="">Selecciona un Gran Premio</option>';
-                historySelect.innerHTML = '<option value="">Selecciona un GP para consultar</option>';
-                
-                calendarData.forEach(race => {
-                    const option = document.createElement('option');
-                    option.value = race.round;
-                    const hasSprint = race.sprint === true || race.isSprint === true;
-                    option.dataset.isSprint = hasSprint ? 'true' : 'false';
-                    option.dataset.gpName = race.name;
-                    option.textContent = `Ronda ${race.round}: ${race.name} (${race.date})`;
-                    selectRace.appendChild(option);
+    try {
+        const { data, error } = await supabaseClient
+            .from('calendario')
+            .select('*')
+            .order('round', { ascending: true });
+        
+        if (error) throw error;
+        calendarData = data;
+        
+        const selectRace = document.getElementById('raceSelect');
+        const historySelect = document.getElementById('gpHistorySelect');
+        
+        selectRace.innerHTML = '<option value="">Selecciona un Gran Premio</option>';
+        historySelect.innerHTML = '<option value="">Selecciona un GP para consultar</option>';
+        
+        calendarData.forEach(race => {
+            const option = document.createElement('option');
+            option.value = race.round;
+            const hasSprint = race.sprint === true || race.isSprint === true;
+            option.dataset.isSprint = hasSprint ? 'true' : 'false';
+            option.dataset.gpName = race.name;
+            option.textContent = `Ronda ${race.round}: ${race.name} (${race.date})`;
+            selectRace.appendChild(option);
 
-                    const historyOpt = option.cloneNode(true);
-                    historySelect.appendChild(historyOpt);
-                });
-            } catch (error) {
-                console.error("Error al cargar calendar.json:", error);
-            }
-        }
+            const historyOpt = option.cloneNode(true);
+            historySelect.appendChild(historyOpt);
+        });
+    } catch (error) {
+        console.error("Error al cargar calendario desde Supabase:", error);
+    }
+}
 
         function actualizarModalidadGranPremio() {
             const selectRace = document.getElementById('raceSelect');
