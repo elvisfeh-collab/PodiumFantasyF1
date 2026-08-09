@@ -551,14 +551,31 @@
         }
 
         function verificarDuplicadosCarrera() {
-            const raceSlots = document.querySelectorAll('.driver-select');
-            const selectedCodes = Array.from(raceSlots).map(s => s.value).filter(v => v !== "");
+            // 1. Validar duplicados internamente en los slots de Sprint de forma independiente
+            const sprintSlots = document.querySelectorAll('.sprint-slot');
+            const selectedSprintCodes = Array.from(sprintSlots).map(s => s.value).filter(v => v !== "");
+
+            sprintSlots.forEach(select => {
+                const currentValue = select.value;
+                Array.from(select.options).forEach(option => {
+                    if (option.value === "") return;
+                    if (selectedSprintCodes.includes(option.value) && option.value !== currentValue) {
+                        option.disabled = true;
+                    } else {
+                        option.disabled = false;
+                    }
+                });
+            });
+
+            // 2. Validar duplicados internamente en los slots de Carrera Larga de forma independiente
+            const raceSlots = document.querySelectorAll('.race-slot');
+            const selectedRaceCodes = Array.from(raceSlots).map(s => s.value).filter(v => v !== "");
 
             raceSlots.forEach(select => {
                 const currentValue = select.value;
                 Array.from(select.options).forEach(option => {
                     if (option.value === "") return;
-                    if (selectedCodes.includes(option.value) && option.value !== currentValue) {
+                    if (selectedRaceCodes.includes(option.value) && option.value !== currentValue) {
                         option.disabled = true;
                     } else {
                         option.disabled = false;
