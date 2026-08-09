@@ -52,17 +52,33 @@ def main():
 
         # 5. Bucle de cálculo e inyección por cada usuario registrado
         for reg in registros_predicciones:
-            user_id = reg.get("user_id")
-            pred_text = reg.get("prediccion")
+            usuario_id = reg.get("usuario_id")
             
-            # Cálculo mediante la regla maestra
-            pts = points_logic.motor_calculo_puntos_oficial(
-                pred_text=pred_text,
-                real_text=clean_data,
-                limite_puestos=limite_puestos
-            )
+            # (Aquí procesas las predicciones según la sesión: quali, sprint o carrera)
+            # ...
+            pts = points_logic.motor_calculo_puntos_oficial(...)
             
-            print(f"👤 Usuario ID {user_id} -> Puntos: {pts}")
+            print(f"👤 Usuario ID {usuario_id} | Sesión {sesion} -> Puntos: {pts}")
+
+            # 6. Mapeo dinámico de puntos hacia la tabla unificada de desgloses
+            columna_punto_sesion = {
+                "quali": "puntos_pole",
+                "sprint": "puntos_sprint",
+                "carrera": "puntos_carrera"
+            }.get(sesion, "puntos_carrera")
+
+            # Hacemos un upsert inteligente en puntuaciones_gp
+            # Primero consultamos si ya existe registro para este usuario y GP, o usamos la función de incremento de Supabase
+            datos_actualizacion = {
+                "usuario_id": usuario_id,
+                "gran_premio": gp_nombre,
+                columna_punto_sesion: pts
+            }
+            
+            supabase.table("puntuaciones_gp").upsert(
+                datos_actualizacion, 
+                on_conflict="usuario_id,gran_premio"
+            ).execute()
 
             # 6. Inyección a la tabla correspondiente en Supabase
             tabla_destino = f"resultados_{sesion}"
