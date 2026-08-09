@@ -1,5 +1,9 @@
 import os
 import sys
+
+# Añade la carpeta actual al path para que Python encuentre los módulos locales
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from supabase import create_client
 import scraper
 import calendar
