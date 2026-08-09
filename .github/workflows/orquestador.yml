@@ -8,8 +8,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clonar repositorio
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: 'logyc'
 
       - name: Configurar entorno Python
         uses: actions/setup-python@v5
@@ -26,4 +28,4 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          python main/main.py
+          python main.py
