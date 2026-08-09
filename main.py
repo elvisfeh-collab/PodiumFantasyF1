@@ -109,5 +109,10 @@ def main():
             
             supabase.table(tabla_destino).upsert(fila_registro).execute()
 
+# CERRAR EL TRY:
+    except Exception as e:
+        print(f"❌ Error durante la ejecución del proceso: {e}")
+        sys.exit(1)
+
 if __name__ == "__main__":
     main()
