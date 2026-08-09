@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Podium FantasyF1 | EFEH Tech Systems</title>
+    <title>Podium Fantasy F1 | EFEH Tech Systems</title>
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -795,22 +795,42 @@
             verificarDuplicadosCarrera();
         }
 
-        function cargarDesgloseGPDB() {
-            const historySelect = document.getElementById('gpHistorySelect');
-            const breakdownBox = document.getElementById('gpBreakdownBox');
-            const selectedVal = historySelect.value;
+        async function cargarDesgloseGPDB() {
+    const historySelect = document.getElementById('gpHistorySelect');
+    const breakdownBox = document.getElementById('gpBreakdownBox');
+    const selectedVal = historySelect.options[historySelect.selectedIndex].dataset.gpName;
 
-            if(!selectedVal) {
-                breakdownBox.innerHTML = '<p style="text-align: center; color: #666; margin: 0;">Selecciona un Gran Premio para consultar el desglose directamente desde las tablas.</p>';
-                return;
-            }
+    if (!selectedVal || !userIdActual) {
+        breakdownBox.innerHTML = '<p style="text-align: center; color: #666; margin: 0;">Selecciona un Gran Premio para consultar el desglose.</p>';
+        return;
+    }
 
-            breakdownBox.innerHTML = `
-                <div style="text-align: center; color: var(--f1-turquesa); padding: 5px;">
-                    [ Consultando registros del GP #${selectedVal} en base de datos... ]
-                </div>
-            `;
+    try {
+        const { data, error } = await supabaseClient
+            .from('puntuaciones_gp')
+            .select('*')
+            .eq('usuario_id', userIdActual)
+            .eq('gran_premio', selectedVal)
+            .single();
+
+        if (error || !data) {
+            breakdownBox.innerHTML = '<p style="text-align: center; color: #aaa; margin: 0;">Aún no hay puntuaciones registradas para este Gran Premio.</p>';
+            return;
         }
+
+        breakdownBox.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between;"><span>🏁 Pole Position:</span> <strong style="color: var(--f1-turquesa);">${data.puntos_pole} pts</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>⚡ Carrera Sprint:</span> <strong style="color: var(--f1-papaya);">${data.puntos_sprint} pts</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>🏎️ Carrera Larga (Top 5):</span> <strong style="color: var(--f1-turquesa);">${data.puntos_carrera} pts</strong></div>
+                <hr style="border: 0; border-top: 1px solid #3e444d; margin: 6px 0;">
+                <div style="display: flex; justify-content: space-between; font-size: 1.1em;"><span>🏆 Total GP:</span> <strong style="color: var(--f1-papaya);">${data.puntos_total_gp} pts</strong></div>
+            </div>
+        `;
+    } catch (err) {
+        breakdownBox.innerHTML = `<p style="color: var(--danger); text-align: center; margin: 0;">Error al cargar desglose: ${err.message}</p>`;
+    }
+}
 
         async function guardarPrediccion() {
             const feedback = document.getElementById('predictionFeedback');
