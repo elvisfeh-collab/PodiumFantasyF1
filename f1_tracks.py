@@ -1,4 +1,4 @@
-# calendar.py (o eventos.py)
+# f1_tracks.py (o calendar.py)
 
 # 1. Diccionario de nombres y variaciones oficiales de los Grandes Premios (Temporada 2026)
 MAPEO_GRANDES_PREMIOS = {
