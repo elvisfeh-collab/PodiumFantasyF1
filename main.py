@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from supabase import create_client
 import scraper
-import calendar
+import f1_tracks
 import points_logic
 import mapping
 import utils
@@ -26,7 +26,7 @@ def main():
 
     try:
         # 2. Determinar evento activo usando el módulo calendar unificado
-        evento = calendar.get_current_event(supabase)
+        evento = f1_tracks.get_current_event(supabase)
         if not evento:
             print("❌ No hay ningún evento activo en la BD.")
             return
@@ -104,7 +104,7 @@ def main():
                 "gran_premio": gp_nombre,
                 "sesion": sesion,
                 "puntos_usuario": pts,
-                "fuente_origen": "EFEH_tech_Prod"
+                "fuente_origen": "EFEH_tech Systems"
             }
             
             supabase.table(tabla_destino).upsert(fila_registro).execute()
