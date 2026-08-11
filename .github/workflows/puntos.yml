@@ -8,8 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Clonar repositorio
+      - name: Clonar repositorio (rama logyc)
         uses: actions/checkout@v4
+        with:
+          ref: 'logyc'
 
       - name: Configurar entorno de Python
         uses: actions/setup-python@v5
