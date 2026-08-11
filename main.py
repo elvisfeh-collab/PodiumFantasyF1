@@ -5,10 +5,8 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from supabase import create_client
-import scraper
 import f1_tracks
 import points_logic
-import mapping
 import utils
 
 def main():
@@ -33,14 +31,22 @@ def main():
             
         gp_nombre = evento['name']
         sesion = evento['sesion']
-        url_evento = evento['url']
         print(f"📡 Procesando GP: {gp_nombre} | Sesión: {sesion}")
 
-        # 3. Raspado de datos utilizando la sesión para el filtrado correcto
-        clean_data = scraper.extract_data(url_evento, sesion)
-        if not clean_data:
-            print("❌ No se obtuvieron datos del scraper. Abortando.")
+        # 3. Obtener el resultado oficial manual directamente desde Supabase
+        # (Buscamos los trigramas ingresados previamente por el panel maestro)
+        res_oficial = supabase.table("resultados") \
+                              .select("posiciones_texto") \
+                              .eq("gran_premio", gp_nombre) \
+                              .eq("sesion", sesion) \
+                              .execute()
+
+        if not res_oficial.data or not res_oficial.data[0].get('posiciones_texto'):
+            print(f"❌ No hay resultados manuales registrados en la BD para {gp_nombre} [{sesion}]. Abortando.")
             return
+            
+        clean_data = res_oficial.data[0]['posiciones_texto']
+        print(f"📋 Resultado oficial recuperado (Trigramas): {clean_data}")
         
         # 4. Obtener las predicciones de los usuarios para este GP desde Supabase
         registros_predicciones = utils.get_user_predictions(supabase, gp_nombre)
@@ -74,7 +80,7 @@ def main():
                 p5 = reg.get("carrera_p5") or ""
                 pred_text = f"{p1},{p2},{p3},{p4},{p5}"
             
-            # Ejecutar el motor de cálculo oficial
+            # Ejecutar el motor de cálculo oficial con trigramas
             pts = points_logic.motor_calculo_puntos_oficial(pred_text, clean_data, limite_puestos)
             
             print(f"👤 Usuario ID {usuario_id} | Sesión {sesion} -> Puntos: {pts}")
@@ -100,16 +106,15 @@ def main():
             # 7. Inyección a la tabla histórica correspondiente en Supabase
             tabla_destino = f"resultados_{sesion}"
             fila_registro = {
-                "usuario_id": usuario_id,  # Corregido de user_id a usuario_id
+                "usuario_id": usuario_id,
                 "gran_premio": gp_nombre,
                 "sesion": sesion,
                 "puntos_usuario": pts,
-                "fuente_origen": "EFEH_tech Systems"
+                "fuente_origen": "EFEH_tech_Systems"
             }
             
             supabase.table(tabla_destino).upsert(fila_registro).execute()
 
-# CERRAR EL TRY:
     except Exception as e:
         print(f"❌ Error durante la ejecución del proceso: {e}")
         sys.exit(1)
