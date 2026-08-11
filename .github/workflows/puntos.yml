@@ -1,18 +1,22 @@
 name: Calcular Puntos EFEH Tech
 
 on:
-  workflow_dispatch: # Esto te pinta el botón web en GitHub para correrlo manualmente cuando quieras
+  workflow_dispatch: 
 
 jobs:
   run-logic:
     runs-on: ubuntu-latest
     
-    # Indicamos explícitamente que trabaje sobre la rama 'logic'
     steps:
       - name: Clonar repositorio (rama logic)
         uses: actions/checkout@v4
         with:
           ref: 'logic'
+
+      - name: Inspeccionar estructura de archivos en la rama logic
+        run: |
+          echo "=== ÁRBOL DE ARCHIVOS EN LA RAMA LOGIC ==="
+          find . -maxdepth 2 -not -path '*/.*'
 
       - name: Configurar entorno de Python
         uses: actions/setup-python@v5
@@ -24,7 +28,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install supabase pandas requests
 
-      - name: Ejecutar motor de puntos y orquestador
+      - name: Ejecutar motor de puntos
         run: python points_logic.py
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
