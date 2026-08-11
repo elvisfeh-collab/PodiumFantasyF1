@@ -45,17 +45,18 @@ def motor_calculo_puntos_oficial(pred_text, real_text, limite_puestos):
 def procesar_sesion_gp(supabase, gp_id, tipo_sesion):
     print(f"--- Procesando [{tipo_sesion}] para GP ID: {gp_id} ---")
     
-    # Límites y mapeo exacto a tus tablas de resultados score
+    # Límites por sesión
     limites = {
         "quali": 1,
         "sprint": 8,
         "carrera": 10
     }
     
+    # Mapeo exacto con los nombres reales de tus tablas en Supabase
     mapeo_tablas = {
         "quali": "resultados_quali",
-        "sprint": "resultados_sprint",
-        "carrera": "resultados_oficiales"
+        "sprint": "resultados_spring",      # Respetando tu nombre 'resultados_spring'
+        "carrera": "resultados_oficiales"   # Respetando tu nombre 'resultados_oficiales'
     }
     
     limite_puestos = limites.get(tipo_sesion, 10)
@@ -91,7 +92,6 @@ def procesar_sesion_gp(supabase, gp_id, tipo_sesion):
                             .eq("gp_id", gp_id) \
                             .execute()
         
-        # Valores actuales por defecto
         p_quali = 0
         p_sprint = 0
         p_carrera = 0
@@ -137,12 +137,14 @@ if __name__ == "__main__":
     
     sesiones = ["quali", "sprint", "carrera"]
     
+    mapeo_tablas_main = {
+        "quali": "resultados_quali",
+        "sprint": "resultados_spring",
+        "carrera": "resultados_oficiales"
+    }
+    
     for sesion in sesiones:
-        tabla = f"resultados_score_{'oficiales' if sesion == 'carrera' else sesion}"
-        # Ajuste de nombre de tabla para sprint si es 'resultados_score_sprint'
-        if sesion == "sprint":
-            tabla = "resultados_score_sprint"
-            
+        tabla = mapeo_tablas_main.get(sesion)
         try:
             res_all = supabase.table(tabla).select("gp_id").execute()
             if res_all.data:
