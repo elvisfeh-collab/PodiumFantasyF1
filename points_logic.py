@@ -53,9 +53,9 @@ def procesar_sesion_gp(supabase, gp_id, tipo_sesion):
     }
     
     mapeo_tablas = {
-        "quali": "resultados_score_quali",
-        "sprint": "resultados_score_sprint",
-        "carrera": "resultados_score_oficiales"
+        "quali": "resultados_quali",
+        "sprint": "resultados_sprint",
+        "carrera": "resultados_oficiales"
     }
     
     limite_puestos = limites.get(tipo_sesion, 10)
