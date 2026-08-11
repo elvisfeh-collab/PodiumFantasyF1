@@ -1,5 +1,7 @@
-# points_logic.py
+import os
+from supabase import create_client
 
+# Escala de puntos oficial basada en el código original[cite: 1]
 ESCALA_MASTER = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
 
 def motor_calculo_puntos_oficial(pred_text, real_text, limite_puestos):
@@ -55,13 +57,12 @@ def motor_calculo_puntos_oficial(pred_text, real_text, limite_puestos):
 
 def procesar_puntos_gp(supabase, gp_id, tipo_sesion):
     """
-    Función puente que conecta la base de datos con el motor oficial de cálculo.
+    Función puente que conecta la base de datos con el motor oficial de cálculo[cite: 1].
     tipo_sesion puede ser 'carrera', 'sprint', o 'quali'
-    limite_puestos: Quali = 1, Sprint = 8, Carrera = 10
     """
     print(f"--- Procesando puntos oficiales para GP ID: {gp_id} [{tipo_sesion}] ---")
     
-    # Definir límites según la sesión
+    # Definir límites según la sesión[cite: 1]
     limites = {
         "quali": 1,
         "sprint": 8,
@@ -69,7 +70,7 @@ def procesar_puntos_gp(supabase, gp_id, tipo_sesion):
     }
     limite_puestos = limites.get(tipo_sesion, 10)
 
-    # 1. Buscar el resultado real en Supabase para este GP y sesión
+    # 1. Buscar el resultado real en Supabase para este GP y sesión[cite: 1]
     res = supabase.table("resultados") \
                   .select("*") \
                   .eq("gp_id", gp_id) \
@@ -80,9 +81,9 @@ def procesar_puntos_gp(supabase, gp_id, tipo_sesion):
         print(f"❌ No hay resultados reales en la BD para la sesión {tipo_sesion}.")
         return
 
-    resultado_real = res.data[0]['posiciones_texto'] # Asumiendo el campo donde guardas el string de pilotos
+    resultado_real = res.data[0]['posiciones_texto']
 
-    # 2. Obtener las predicciones de los usuarios para este GP
+    # 2. Obtener las predicciones de los usuarios para este GP[cite: 1]
     preds = supabase.table("predicciones") \
                     .select("*") \
                     .eq("gp_id", gp_id) \
@@ -93,7 +94,7 @@ def procesar_puntos_gp(supabase, gp_id, tipo_sesion):
         print(f"❌ No hay predicciones registradas para esta sesión.")
         return
 
-    # 3. Calcular y actualizar puntos por usuario usando el motor oficial
+    # 3. Calcular y actualizar puntos por usuario usando el motor oficial[cite: 1]
     for p in preds.data:
         puntos_calculados = motor_calculo_puntos_oficial(
             pred_text=p['prediccion_texto'], 
@@ -101,7 +102,7 @@ def procesar_puntos_gp(supabase, gp_id, tipo_sesion):
             limite_puestos=limite_puestos
         )
         
-        # Guardar o actualizar en la tabla de puntuaciones de Supabase
+        # Guardar o actualizar en la tabla de puntuaciones de Supabase[cite: 1]
         supabase.table("puntuaciones").upsert({
             "user_id": p['user_id'],
             "gp_id": gp_id,
@@ -110,3 +111,32 @@ def procesar_puntos_gp(supabase, gp_id, tipo_sesion):
         }, on_conflict="user_id,gp_id,sesion").execute()
 
     print(f"✅ Puntos calculados y guardados con éxito para {len(preds.data)} usuarios.")
+
+# ==========================================
+# BLOQUE DE EJECUCIÓN AUTOMÁTICA (EL MOTOR)
+# ==========================================
+if __name__ == "__main__":
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_KEY")
+    
+    if not url or not key:
+        print("❌ Error crítico: Las credenciales de Supabase no están configuradas en las variables de entorno.")
+        exit(1)
+        
+    supabase = create_client(url, key)
+    print("🚀 Conexión con Supabase establecida. Iniciando escaneo de resultados...")
+    
+    # Consulta todos los resultados existentes para procesar automáticamente cada GP y sesión cargada
+    res_all = supabase.table("resultados").select("gp_id, sesion").execute()
+    
+    if not res_all.data:
+        print("⚠️ No hay resultados oficiales registrados todavía en la tabla 'resultados'.")
+    else:
+        procesados = set()
+        for r in res_all.data:
+            clave = (r['gp_id'], r['sesion'])
+            if clave not in procesados:
+                procesados.add(clave)
+                procesar_puntos_gp(supabase, r['gp_id'], r['sesion'])
+                
+    print("🏁 Ejecución del motor de puntos finalizada.")
