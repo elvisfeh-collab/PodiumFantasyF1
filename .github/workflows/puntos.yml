@@ -8,15 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Clonar repositorio (rama logic)
+      - name: Clonar repositorio
         uses: actions/checkout@v4
-        with:
-          ref: 'logic'
-
-      - name: Inspeccionar estructura de archivos en la rama logic
-        run: |
-          echo "=== ÁRBOL DE ARCHIVOS EN LA RAMA LOGIC ==="
-          find . -maxdepth 2 -not -path '*/.*'
 
       - name: Configurar entorno de Python
         uses: actions/setup-python@v5
