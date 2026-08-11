@@ -1,7 +1,6 @@
 import os
 from supabase import create_client
 
-# Escala de puntos oficial
 ESCALA_MASTER = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
 
 def motor_calculo_puntos_oficial(pred_text, real_text, limite_puestos):
@@ -11,6 +10,9 @@ def motor_calculo_puntos_oficial(pred_text, real_text, limite_puestos):
     p_arr = [p.strip().lower() for p in pred_text.split(",") if p.strip()]
     r_arr = [p.strip().lower() for p in real_text.split(",") if p.strip()]
     
+    if not p_arr or not r_arr:
+        return 0
+
     podio_perfecto = False
     if len(p_arr) >= 3 and len(r_arr) >= 3:
         if p_arr[0] == r_arr[0] and p_arr[1] == r_arr[1] and p_arr[2] == r_arr[2]:
@@ -42,119 +44,72 @@ def motor_calculo_puntos_oficial(pred_text, real_text, limite_puestos):
 
     return pts
 
-def procesar_sesion_gp(supabase, gp_id, tipo_sesion):
-    print(f"--- Procesando [{tipo_sesion}] para GP ID: {gp_id} ---")
-    
-    # Límites por sesión
-    limites = {
-        "quali": 1,
-        "sprint": 8,
-        "carrera": 10
-    }
-    
-    # Mapeo exacto con los nombres reales de tus tablas en Supabase
-    mapeo_tablas = {
-        "quali": "resultados_quali",
-        "sprint": "resultados_spring",      # Respetando tu nombre 'resultados_spring'
-        "carrera": "resultados_oficiales"   # Respetando tu nombre 'resultados_oficiales'
-    }
-    
-    limite_puestos = limites.get(tipo_sesion, 10)
-    nombre_tabla = mapeo_tablas.get(tipo_sesion)
+def procesar_todo(supabase):
+    print("🚀 Iniciando procesamiento de puntos con estructura real...")
 
-    # 1. Obtener resultado oficial de la sesión
-    res = supabase.table(nombre_tabla).select("*").eq("gp_id", gp_id).execute()
-    if not res.data:
-        print(f"❌ No hay registros en '{nombre_tabla}' para el GP ID {gp_id}.")
+    # 1. Obtener todas las predicciones de los usuarios
+    preds_res = supabase.table("predicciones").select("*").execute()
+    if not preds_res.data:
+        print("⚠️ No hay predicciones registradas.")
         return
 
-    resultado_real = res.data[0]['posiciones_texto']
+    for pred in preds_res.data:
+        usuario_id = pred['usuario_id']
+        gran_premio = pred['gran_premio']
+        pred_id = pred['id']
 
-    # 2. Obtener predicciones de los usuarios para esta sesión
-    preds = supabase.table("predicciones").select("*").eq("gp_id", gp_id).eq("sesion", tipo_sesion).execute()
-    if not preds.data:
-        print(f"⚠️ No hay predicciones para la sesión {tipo_sesion} en este GP.")
-        return
+        puntos_quali = 0
+        puntos_sprint = 0
+        puntos_carrera = 0
 
-    # 3. Calcular e impactar la tabla central 'puntuaciones_gp' con desglose
-    for p in preds.data:
-        user_id = p['user_id']
-        puntos_calculados = motor_calculo_puntos_oficial(
-            pred_text=p['prediccion_texto'], 
-            real_text=resultado_real, 
-            limite_puestos=limite_puestos
-        )
-        
-        # Consultar si ya existe un registro previo para este usuario en este GP
-        existente = supabase.table("puntuaciones_gp") \
-                            .select("*") \
-                            .eq("user_id", user_id) \
-                            .eq("gp_id", gp_id) \
-                            .execute()
-        
-        p_quali = 0
-        p_sprint = 0
-        p_carrera = 0
-        
-        if existente.data:
-            row = existente.data[0]
-            p_quali = row.get("puntos_quali", 0) or 0
-            p_sprint = row.get("puntos_sprint", 0) or 0
-            p_carrera = row.get("puntos_carrera", 0) or 0
+        # --- A. PROCESAR QUALI ---
+        # En predicciones, la quali usa 'poleman'. En resultados_quali, la columna se llama 'quali'
+        if pred.get('poleman'):
+            res_q = supabase.table("resultados_quali").select("quali").eq("gran_premio", gran_premio).execute()
+            if res_q.data:
+                piloto_real_pole = res_q.data[0]['quali']
+                # Si el poleman predicho coincide con el real, otorga puntos base de P1 (25 pts o regla simplificada dequali)
+                if pred['poleman'].strip().lower() == piloto_real_pole.strip().lower():
+                    puntos_quali = 25 # O el valor que corresponda a la lógica de quali
 
-        # Actualizar la sesión correspondiente
-        if tipo_sesion == "quali":
-            p_quali = puntos_calculados
-        elif tipo_sesion == "sprint":
-            p_sprint = puntos_calculados
-        elif tipo_sesion == "carrera":
-            p_carrera = puntos_calculados
-            
-        puntos_total = p_quali + p_sprint + p_carrera
+        # --- B. PROCESAR SPRINT ---
+        sprint_preds = [pred.get('sprint_p1'), pred.get('sprint_p2'), pred.get('sprint_p3')]
+        if any(sprint_preds):
+            pred_sprint_text = ",".join([str(p) for p in sprint_preds if p])
+            res_s = supabase.table("resultados_sprint").select("sprint").eq("gran_premio", gran_premio).execute()
+            if res_s.data:
+                real_sprint_text = res_s.data[0]['sprint']
+                puntos_sprint = motor_calculo_puntos_oficial(pred_sprint_text, real_sprint_text, limite_puestos=8)
 
-        # Guardar consolidado en puntuaciones_gp
-        supabase.table("puntuaciones_gp").upsert({
-            "user_id": user_id,
-            "gp_id": gp_id,
-            "puntos_quali": p_quali,
-            "puntos_sprint": p_sprint,
-            "puntos_carrera": p_carrera,
-            "puntos_total": puntos_total
-        }, on_conflict="user_id,gp_id").execute()
+        # --- C. PROCESAR CARRERA OFICIAL ---
+        carrera_preds = [pred.get('carrera_p1'), pred.get('carrera_p2'), pred.get('carrera_p3'), pred.get('carrera_p4'), pred.get('carrera_p5')]
+        if any(carrera_preds):
+            pred_carrera_text = ",".join([str(p) for p in carrera_preds if p])
+            res_c = supabase.table("resultados_oficiales").select("carrera").eq("gran_premio", gran_premio).execute()
+            if res_c.data:
+                real_carrera_text = res_c.data[0]['carrera']
+                puntos_carrera = motor_calculo_puntos_oficial(pred_carrera_text, real_carrera_text, limite_puestos=10)
 
-    print(f"✅ Puntuaciones de {tipo_sesion} guardadas y desglosadas con éxito.")
+        puntos_total = puntos_quali + puntos_sprint + puntos_carrera
+
+        # Actualizar la tabla de predicciones con sus puntos parciales y totales individuales
+        supabase.table("predicciones").update({
+            "puntos_qualy": puntos_quali,
+            "puntos_sprint": puntos_sprint,
+            "puntos_carrera": puntos_carrera,
+            "total_fin_de_semana": puntos_total
+        }).eq("id", pred_id).execute()
+
+        print(f"✅ GP: {gran_premio} | Usuario: {usuario_id} -> Q:{puntos_quali} S:{puntos_sprint} C:{puntos_carrera} Total:{puntos_total}")
 
 if __name__ == "__main__":
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_KEY")
     
     if not url or not key:
-        print("❌ Error: Faltan credenciales de Supabase en el entorno.")
+        print("❌ Error: Faltan credenciales.")
         exit(1)
         
     supabase = create_client(url, key)
-    print("🚀 Conexión establecida. Iniciando procesamiento integral de puntuaciones...")
-    
-    sesiones = ["quali", "sprint", "carrera"]
-    
-    mapeo_tablas_main = {
-        "quali": "resultados_quali",
-        "sprint": "resultados_spring",
-        "carrera": "resultados_oficiales"
-    }
-    
-    for sesion in sesiones:
-        tabla = mapeo_tablas_main.get(sesion)
-        try:
-            res_all = supabase.table(tabla).select("gp_id").execute()
-            if res_all.data:
-                gps_procesados = set()
-                for r in res_all.data:
-                    gp_id = r['gp_id']
-                    if gp_id not in gps_procesados:
-                        gps_procesados.add(gp_id)
-                        procesar_sesion_gp(supabase, gp_id, sesion)
-        except Exception as e:
-            print(f"⚠️ Aviso al escanear {tabla}: {e}")
-                
-    print("🏁 Sincronización y cálculo de puntos finalizados.")
+    procesar_todo(supabase)
+    print("🏁 Cálculo finalizado con éxito.")
