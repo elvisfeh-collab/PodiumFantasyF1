@@ -11,7 +11,9 @@ def calcular_puntos_sesion(pred_text, real_text, limite_puestos, es_sprint=False
     Motor de cálculo oficial de EFEH TECH:
     - Simples: Piloto en Top real pero posición incorrecta.
     - Dobles: Posición exacta acertada.
-    - Triples: Requiere obligatoriamente P1, P2 y P3 exactos para activar la racha en el podio.
+    - Triples: Requiere obligatoriamente P1, P2 y P3 exactos (podio perfecto) 
+      para activar la racha de triples, la cual se mantiene activa para P4 y P5 
+      siempre y cuando cada posición mantenga el acierto exacto.
     """
     if not pred_text or not real_text or not real_text.strip():
         return 0
@@ -113,13 +115,26 @@ def procesar_todo(supabase):
 
         puntos_total_fin_de_semana = puntos_quali + puntos_sprint + puntos_carrera
 
-        # 2. Actualizar la tabla 'predicciones' con los parciales y el total (Estrategia funcional probada)
+        # 2. Actualizar la tabla 'predicciones' con los parciales y el total
         supabase.table("predicciones").update({
             "puntos_qualy": puntos_quali,
             "puntos_sprint": puntos_sprint,
             "puntos_carrera": puntos_carrera,
             "total_fin_de_semana": puntos_total_fin_de_semana
         }).eq("id", pred_id).execute()
+
+        # 3. Guardar el desglose detallado en la tabla 'puntuaciones_gp' (si existe)
+        try:
+            supabase.table("puntuaciones_gp").upsert({
+                "usuario_id": usuario_id,
+                "gran_premio": gran_premio,
+                "puntos_quali": puntos_quali,
+                "puntos_sprint": puntos_sprint,
+                "puntos_carrera": puntos_carrera,
+                "total": puntos_total_fin_de_semana
+            }, on_conflict="usuario_id,gran_premio").execute()
+        except Exception as e:
+            pass
 
         # Acumular para el global del usuario
         if usuario_id not in puntos_acumulados_usuarios:
@@ -128,7 +143,7 @@ def procesar_todo(supabase):
 
         print(f"🎯 GP: {gran_premio} | Usuario: {usuario_id[:8]}... -> Q: {puntos_quali} | S: {puntos_sprint} | C: {puntos_carrera} | Total GP: {puntos_total_fin_de_semana}")
 
-    # 3. Actualizar los puntos globales en la tabla 'usuarios' para cada participante
+    # 4. Actualizar los puntos globales en la tabla 'usuarios' para cada participante
     for u_id, pts_glob in puntos_acumulados_usuarios.items():
         supabase.table("usuarios").update({
             "puntos_globales": pts_glob
