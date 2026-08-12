@@ -61,25 +61,21 @@ def calcular_puntos_sesion(pred_text, real_text, limite_puestos, es_sprint=False
     return pts
 
 def procesar_todo(supabase):
-    print("🚀 [EFEH TECH] Iniciando motor de cálculo oficial de puntos (Modo Diagnóstico Activo)...")
+    print("🚀 [EFEH TECH] Iniciando motor de cálculo oficial de puntos...")
 
-    # 1. Obtener todas las predicciones registradas por los usuarios
+    # 1. Obtener todas las predicciones registradas
     preds_res = supabase.table("predicciones").select("*").execute()
     if not preds_res.data:
-        print("⚠️ No hay predicciones registradas en la tabla 'predicciones'.")
+        print("⚠️ No hay predicciones registradas en la base de datos.")
         return
 
-    print(f"📊 Se encontraron {len(preds_res.data)} registros de predicciones para procesar.")
-
+    # Diccionario para acumular los puntos globales de cada usuario
     puntos_acumulados_usuarios = {}
 
     for pred in preds_res.data:
-        usuario_id = pred.get('usuario_id')
-        gran_premio = pred.get('gran_premio')
-
-        if not usuario_id or not gran_premio:
-            print(f"⚠️ Registro de predicción ignorado por falta de usuario_id o gran_premio: {pred.get('id')}")
-            continue
+        usuario_id = pred['usuario_id']
+        gran_premio = pred['gran_premio']
+        pred_id = pred['id']
 
         puntos_quali = 0
         puntos_sprint = 0
@@ -90,7 +86,7 @@ def procesar_todo(supabase):
         if poleman_predicho:
             res_q = supabase.table("resultados_quali").select("quali").eq("gran_premio", gran_premio).execute()
             if res_q.data:
-                poleman_real = res_q.data[0].get('quali', '')
+                poleman_real = res_q.data[0]['quali']
                 if poleman_predicho.strip().lower() == poleman_real.strip().lower():
                     puntos_quali = 5
 
@@ -100,7 +96,7 @@ def procesar_todo(supabase):
             pred_sprint_text = ",".join([str(p) for p in sprint_preds if p])
             res_s = supabase.table("resultados_sprint").select("sprint").eq("gran_premio", gran_premio).execute()
             if res_s.data:
-                real_sprint_text = res_s.data[0].get('sprint', '')
+                real_sprint_text = res_s.data[0]['sprint']
                 puntos_sprint = calcular_puntos_sesion(pred_sprint_text, real_sprint_text, limite_puestos=8, es_sprint=True)
 
         # --- C. CARRERA OFICIAL ---
@@ -112,36 +108,29 @@ def procesar_todo(supabase):
             pred_carrera_text = ",".join([str(p) for p in carrera_preds if p])
             res_c = supabase.table("resultados_oficiales").select("carrera").eq("gran_premio", gran_premio).execute()
             if res_c.data:
-                real_carrera_text = res_c.data[0].get('carrera', '')
+                real_carrera_text = res_c.data[0]['carrera']
                 puntos_carrera = calcular_puntos_sesion(pred_carrera_text, real_carrera_text, limite_puestos=10, es_sprint=False)
 
         puntos_total_fin_de_semana = puntos_quali + puntos_sprint + puntos_carrera
 
-        print(f"🎯 Calculado -> GP: {gran_premio} | Usuario: {usuario_id[:8]}... | Q: {puntos_quali} | S: {puntos_sprint} | C: {puntos_carrera} | Total: {puntos_total_fin_de_semana}")
-
-        # 2. Guardar en 'puntuaciones_gp' (SIN BLOQUES SILENCIOSOS)
-        # Nota: Si esto falla, lanzará el error exacto en la consola para saber por qué no guardaba.
-        payload_gp = {
-            "usuario_id": usuario_id,
-            "gran_premio": gran_premio,
-            "puntos_quali": puntos_quali,
+        # 2. Actualizar la tabla 'predicciones' con los parciales y el total (Estrategia funcional probada)
+        supabase.table("predicciones").update({
+            "puntos_qualy": puntos_quali,
             "puntos_sprint": puntos_sprint,
             "puntos_carrera": puntos_carrera,
-            "total": puntos_total_fin_de_semana
-        }
-        
-        # Intentamos upsert. Si la tabla no tiene constraint unique, esto arrojará error visible.
-        res_upsert = supabase.table("puntuaciones_gp").upsert(payload_gp, on_conflict="usuario_id,gran_premio").execute()
-        print(f"💾 Respuesta Supabase (puntuaciones_gp): Exitoso para {gran_premio}")
+            "total_fin_de_semana": puntos_total_fin_de_semana
+        }).eq("id", pred_id).execute()
 
         # Acumular para el global del usuario
         if usuario_id not in puntos_acumulados_usuarios:
             puntos_acumulados_usuarios[usuario_id] = 0
         puntos_acumulados_usuarios[usuario_id] += puntos_total_fin_de_semana
 
-    # 3. Actualizar los puntos globales en la tabla 'usuarios'
+        print(f"🎯 GP: {gran_premio} | Usuario: {usuario_id[:8]}... -> Q: {puntos_quali} | S: {puntos_sprint} | C: {puntos_carrera} | Total GP: {puntos_total_fin_de_semana}")
+
+    # 3. Actualizar los puntos globales en la tabla 'usuarios' para cada participante
     for u_id, pts_glob in puntos_acumulados_usuarios.items():
-        res_user = supabase.table("usuarios").update({
+        supabase.table("usuarios").update({
             "puntos_globales": pts_glob
         }).eq("id", u_id).execute()
         print(f"👤 Usuario {u_id[:8]}... actualizado con Puntos Globales: {pts_glob}")
@@ -151,9 +140,9 @@ if __name__ == "__main__":
     key = os.environ.get("SUPABASE_KEY")
     
     if not url or not key:
-        print("❌ Error crítico: Faltan las credenciales SUPABASE_URL o SUPABASE_KEY en las variables de entorno.")
+        print("❌ Error: Faltan las credenciales de Supabase en las variables de entorno.")
         exit(1)
         
     supabase = create_client(url, key)
     procesar_todo(supabase)
-    print("🏁 [EFEH TECH] Motor de cálculo finalizado.")
+    print("🏁 [EFEH TECH] Cálculo y sincronización con Supabase finalizados correctamente.")
