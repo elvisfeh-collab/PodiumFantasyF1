@@ -94,10 +94,10 @@
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
-            padding-bottom: 5rem; /* Espacio para barra inferior móvil */
+            padding-bottom: 5rem;
         }
 
-        /* Vista de Autenticación (Login / Registro superpuesto) */
+        /* Vista de Autenticación (Login Principal) */
         #authView {
             display: flex;
             justify-content: center;
@@ -116,26 +116,18 @@
             border-top: 4px solid var(--color-papaya);
         }
 
-        .auth-tabs {
+        .auth-header-actions {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 1.5rem;
             border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
         }
 
-        .auth-tab-btn {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            padding: 0.75rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .auth-tab-btn.active {
+        .auth-header-actions h3 {
             color: var(--color-turquoise);
-            border-bottom: 2px solid var(--color-turquoise);
+            font-size: 1.1rem;
         }
 
         .form-group {
@@ -181,13 +173,8 @@
             letter-spacing: 0.5px;
         }
 
-        .btn-action:hover {
-            opacity: 0.9;
-        }
-
-        .btn-turquesa {
-            background-color: var(--color-turquoise);
-        }
+        .btn-action:hover { opacity: 0.9; }
+        .btn-turquesa { background-color: var(--color-turquoise); }
 
         .status-msg {
             margin-top: 1rem;
@@ -198,6 +185,45 @@
         }
         .status-error { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid var(--danger); }
         .status-success { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid var(--success); }
+
+        /* Subventana Modal de Registro (Sobrepuesta) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-card {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-top: 4px solid var(--color-turquoise);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .modal-close:hover { color: var(--text-main); }
 
         /* Tarjetas y Contenedores */
         .dashboard-header {
@@ -228,9 +254,7 @@
             border-left: 4px solid var(--color-papaya);
         }
 
-        .stat-card.turquoise {
-            border-left-color: var(--color-turquoise);
-        }
+        .stat-card.turquoise { border-left-color: var(--color-turquoise); }
 
         .stat-card h3 {
             font-size: 0.85rem;
@@ -259,9 +283,7 @@
         }
 
         /* Tablas */
-        .table-container {
-            overflow-x: auto;
-        }
+        .table-container { overflow-x: auto; }
 
         table {
             width: 100%;
@@ -283,9 +305,7 @@
             letter-spacing: 0.5px;
         }
 
-        tr:hover {
-            background-color: rgba(255, 255, 255, 0.02);
-        }
+        tr:hover { background-color: rgba(255, 255, 255, 0.02); }
 
         .text-center { text-align: center; }
         .text-right { text-align: right; }
@@ -351,9 +371,7 @@
             transition: color 0.2s;
         }
 
-        .nav-btn.active {
-            color: var(--color-turquoise);
-        }
+        .nav-btn.active { color: var(--color-turquoise); }
 
         .nav-btn svg {
             width: 20px;
@@ -392,10 +410,7 @@
             transition: opacity 0.2s;
             margin-top: 0.5rem;
         }
-
-        .btn-paypal:hover {
-            opacity: 0.9;
-        }
+        .btn-paypal:hover { opacity: 0.9; }
 
         @media (max-width: 768px) {
             .navbar { padding: 0.75rem 1rem; }
@@ -417,15 +432,14 @@
         </div>
     </nav>
 
-    <!-- 1. VISTA DE AUTENTICACIÓN (LOGIN / REGISTRO) -->
+    <!-- 1. VISTA DE AUTENTICACIÓN (LOGIN PRINCIPAL) -->
     <div id="authView" class="container">
         <div class="auth-card">
-            <div class="auth-tabs">
-                <button id="tabLoginBtn" class="auth-tab-btn active" onclick="cambiarModoAuth('login')">Iniciar Sesión</button>
-                <button id="tabRegisterBtn" class="auth-tab-btn" onclick="cambiarModoAuth('register')">Registrarse</button>
+            <div class="auth-header-actions">
+                <h3>Acceso de Usuario</h3>
+                <button type="button" class="btn-action btn-turquesa" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="abrirModalRegistro()">Registrarse</button>
             </div>
 
-            <!-- Formulario de Login -->
             <form id="formLogin" onsubmit="procesarLogin(event)">
                 <div class="form-group">
                     <label>Email</label>
@@ -437,9 +451,17 @@
                 </div>
                 <button type="submit" class="btn-action">Entrar</button>
             </form>
+            <div id="authFeedback" class="status-msg hidden"></div>
+        </div>
+    </div>
 
-            <!-- Formulario de Registro -->
-            <form id="formRegister" class="hidden" onsubmit="procesarRegistro(event)">
+    <!-- SUBVENTANA MODAL DE REGISTRO (SOBREPUESTA) -->
+    <div id="registerModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button class="modal-close" onclick="cerrarModalRegistro()">✕</button>
+            <h2 style="color: var(--color-turquoise); margin-bottom: 1rem; font-size: 1.2rem;">Crear Nueva Cuenta</h2>
+            
+            <form id="formRegister" onsubmit="procesarRegistro(event)">
                 <div class="form-group">
                     <label>Email</label>
                     <input type="email" id="reg-email" class="form-control" placeholder="usuario@dominio.com" required>
@@ -472,10 +494,9 @@
                         <option value="VE">🇻🇪 Venezuela</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-action btn-turquesa">Crear Cuenta</button>
+                <button type="submit" class="btn-action btn-turquesa">Completar Registro</button>
             </form>
-
-            <div id="authFeedback" class="status-msg hidden"></div>
+            <div id="registerFeedback" class="status-msg hidden"></div>
         </div>
     </div>
 
@@ -682,7 +703,7 @@
     </nav>
 
     <script>
-        // CONFIGURACIÓN SUPABASE (Reemplaza con tus credenciales reales)
+        // CONFIGURACIÓN SUPABASE
         const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
         const SUPABASE_ANON_KEY = 'tu-anon-key';
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -691,6 +712,16 @@
         let calendarData = [];
         let usuarioActual = null;
         let userIdActual = null;
+
+        // VERIFICAR SESIÓN ACTIVA AUTOMÁTICAMENTE AL CARGAR LA PÁGINA (Fundamental para GitHub Pages)
+        document.addEventListener("DOMContentLoaded", async () => {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (session && session.user) {
+                userIdActual = session.user.id;
+                usuarioActual = session.user.email;
+                entrarAlSistema(usuarioActual);
+            }
+        });
 
         async function inicializarApp() {
             await cargarPilotos2026();
@@ -774,25 +805,12 @@
             });
         }
 
-        function cambiarModoAuth(modo) {
-            const btnLogin = document.getElementById('tabLoginBtn');
-            const btnRegister = document.getElementById('tabRegisterBtn');
-            const formLogin = document.getElementById('formLogin');
-            const formRegister = document.getElementById('formRegister');
-            const feedback = document.getElementById('authFeedback');
-            feedback.className = "hidden";
+        function abrirModalRegistro() {
+            document.getElementById('registerModal').classList.remove('hidden');
+        }
 
-            if (modo === 'login') {
-                btnLogin.classList.add('active');
-                btnRegister.classList.remove('active');
-                formLogin.classList.remove('hidden');
-                formRegister.classList.add('hidden');
-            } else {
-                btnRegister.classList.add('active');
-                btnLogin.classList.remove('active');
-                formRegister.classList.remove('hidden');
-                formLogin.classList.add('hidden');
-            }
+        function cerrarModalRegistro() {
+            document.getElementById('registerModal').classList.add('hidden');
         }
 
         async function procesarRegistro(event) {
@@ -801,7 +819,7 @@
             const password = document.getElementById('reg-password').value;
             const passwordConfirm = document.getElementById('reg-password-confirm').value;
             const pais = document.getElementById('reg-pais').value;
-            const feedback = document.getElementById('authFeedback');
+            const feedback = document.getElementById('registerFeedback');
             feedback.className = "hidden";
 
             try {
@@ -817,9 +835,10 @@
                     .from('usuarios')
                     .insert([{ id: userIdActual, username: usernameProvisional, pais: pais, puntos_globales: 0 }]);
                 
-                if (profileError) console.warn("Perfil ya existe o requiere sincronización:", profileError.message);
+                if (profileError) console.warn("Aviso de perfil:", profileError.message);
 
                 usuarioActual = email;
+                cerrarModalRegistro();
                 entrarAlSistema(email);
             } catch (err) {
                 feedback.textContent = "Error en el registro: " + err.message;
@@ -864,7 +883,6 @@
             document.getElementById('bottomNavBar').classList.add('hidden');
             document.getElementById('navUserArea').classList.add('hidden');
             document.getElementById('authView').classList.remove('hidden');
-            cambiarModoAuth('login');
         }
 
         function switchDashboardTab(tabName) {
@@ -906,7 +924,7 @@
 
         async function cargarStandingsIndividuales() {
             const container = document.getElementById('subStandingsIndividual');
-            container.innerHTML = '<p style="color: var(--color-turquoise); text-align: center;">Cargando ranking desde Supabase...</p>';
+            container.innerHTML = '<p class="text-center" style="color: var(--color-turquoise);">Cargando ranking desde Supabase...</p>';
 
             try {
                 const { data: usuarios, error } = await supabase
@@ -917,7 +935,7 @@
                 if (error) throw error;
 
                 if (!usuarios || usuarios.length === 0) {
-                    container.innerHTML = '<p style="color: #aaa; text-align: center;">No hay usuarios registrados todavía.</p>';
+                    container.innerHTML = '<p class="text-center" style="color: #aaa;">No hay usuarios registrados todavía.</p>';
                     return;
                 }
 
@@ -936,7 +954,7 @@
 
                 container.innerHTML = html;
             } catch (err) {
-                container.innerHTML = `<p style="color: var(--danger); text-align: center;">Error al cargar standings: ${err.message}</p>`;
+                container.innerHTML = `<p class="text-center" style="color: var(--danger);">Error al cargar standings: ${err.message}</p>`;
             }
         }
 
