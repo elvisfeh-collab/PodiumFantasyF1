@@ -2,508 +2,695 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Podium Fantasy F1 | EFEH Tech Systems</title>
-
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0b0e11">
-
-    <!-- SDK de Supabase -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podium Fantasy F1 - EfEH tech Systems</title>
+    <!-- Supabase Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Script de Conexión Independiente -->
-    <script src="./supabaseClient.js"></script>
-
     <style>
         :root {
-            --f1-turquesa: #00d2be;
-            --f1-papaya: #ff8700;
-            --f1-bg: #0b0e11;
-            --f1-card: #1c2025;
-            --white: #ffffff;
-            --danger: #ff4d4d;
-            --success: #00d2be;
+            --bg-main: #2b303c;
+            --bg-card: #343b48;
+            --bg-card-hover: #3e444d;
+            --color-turquoise: #00d2be;
+            --color-papaya: #ff8700;
+            --text-main: #ffffff;
+            --text-muted: #9ca3af;
+            --border-color: #4b5563;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background-color: var(--f1-bg);
-            color: var(--white);
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 0;
+            background-color: var(--bg-main);
+            color: var(--text-main);
             display: flex;
             flex-direction: column;
-            align-items: center;
             min-height: 100vh;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        .app-header-full {
-            width: 100%;
-            background: var(--f1-card);
-            padding: 15px 20px;
-            box-sizing: border-box;
+        .hidden {
+            display: none !important;
+        }
+
+        /* Barra Superior / Navbar */
+        .navbar {
+            background-color: var(--bg-card);
+            border-bottom: 2px solid var(--color-turquoise);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 4px solid var(--f1-papaya);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            padding: 1rem 1.5rem;
         }
 
-        .header-title-container {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .app-title {
-            font-weight: 900;
-            font-size: 1.2em;
-            color: var(--f1-papaya);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin: 0;
-        }
-
-        .app-subtitle {
-            font-size: 0.7em;
-            color: #a0a0a0;
-            text-transform: uppercase;
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--color-turquoise);
             letter-spacing: 1px;
-            margin: 0;
         }
 
-        .profile-icon-btn {
-            background: #101317;
-            border: 1px solid #3e444d;
-            color: var(--f1-turquesa);
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
+        .navbar-brand span {
+            display: block;
+            font-size: 0.65rem;
+            color: var(--color-papaya);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .user-info-nav {
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 1.1em;
-            transition: 0.2s;
+            transition: all 0.2s;
         }
-        .profile-icon-btn:hover { background: #252b33; }
 
+        .btn-logout:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* Contenedor Principal */
         .container {
+            flex: 1;
+            padding: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
             width: 100%;
-            max-width: 500px;
+            padding-bottom: 5rem; /* Espacio para barra inferior móvil */
+        }
+
+        /* Vista de Autenticación (Login / Registro superpuesto) */
+        #authView {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 15px;
-            box-sizing: border-box;
-            margin-bottom: 70px;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            padding: 2rem;
         }
 
-        .card-box {
-            background: var(--f1-card);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-        }
-
-        .card-box h3 {
-            color: var(--f1-turquesa);
-            font-size: 1em;
-            text-transform: uppercase;
-            margin-top: 0;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            background: #101317;
-            border: 1px solid #3e444d;
+        .auth-card {
+            background-color: var(--bg-card);
             border-radius: 8px;
-            color: var(--white);
-            box-sizing: border-box;
-            font-size: 0.9em;
+            padding: 2rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            border-top: 4px solid var(--color-papaya);
         }
 
-        label {
-            font-size: 0.75em;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .auth-tab-btn.active {
+            color: var(--color-turquoise);
+            border-bottom: 2px solid var(--color-turquoise);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
             display: block;
-            margin-bottom: 4px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-turquoise);
         }
 
         .btn-action {
             width: 100%;
-            padding: 14px;
-            background: var(--f1-papaya);
-            color: #000;
+            background-color: var(--color-papaya);
+            color: #111;
             border: none;
-            border-radius: 8px;
-            font-weight: 900;
+            padding: 0.75rem;
+            font-weight: bold;
+            border-radius: 4px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: opacity 0.2s;
             text-transform: uppercase;
-            font-size: 0.9em;
-            text-decoration: none;
-            display: inline-block;
-            box-sizing: border-box;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(255, 135, 0, 0.3);
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
         }
-        .btn-action:hover { opacity: 0.9; }
+
+        .btn-action:hover {
+            opacity: 0.9;
+        }
 
         .btn-turquesa {
-            background: var(--f1-turquesa);
-            color: #000;
-            box-shadow: 0 4px 12px rgba(0, 210, 190, 0.3);
+            background-color: var(--color-turquoise);
         }
 
-        .nav-bar-bottom {
+        .status-msg {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        .status-error { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid var(--danger); }
+        .status-success { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid var(--success); }
+
+        /* Tarjetas y Contenedores */
+        .dashboard-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.8rem;
+            color: var(--text-main);
+        }
+
+        .dashboard-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.2rem;
+            border-left: 4px solid var(--color-papaya);
+        }
+
+        .stat-card.turquoise {
+            border-left-color: var(--color-turquoise);
+        }
+
+        .stat-card h3 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.6rem;
+            font-weight: bold;
+        }
+
+        .card-box {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-box h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--color-turquoise);
+        }
+
+        /* Tablas */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: rgba(0, 0, 0, 0.1);
+            color: var(--color-papaya);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+
+        .badge {
+            background-color: var(--color-turquoise);
+            color: #111;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        /* Subtabs de Standings */
+        .subtabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .subtab-btn {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.5rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .subtab-btn.active {
+            background-color: var(--color-turquoise);
+            color: #111;
+            border-color: var(--color-turquoise);
+        }
+
+        /* Barra de Navegación Inferior Estilo App Móvil */
+        .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            background: var(--f1-card);
+            background-color: var(--bg-card);
+            border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
-            border-top: 1px solid #3e444d;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.6);
-            z-index: 99;
-            box-sizing: border-box;
-            padding: 5px 0;
+            padding: 0.6rem 0;
+            z-index: 1000;
         }
 
         .nav-btn {
-            flex: 1;
-            background: transparent;
+            background: none;
             border: none;
-            color: #888;
-            font-size: 0.6em;
-            font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
+            color: var(--text-muted);
             display: flex;
             flex-direction: column;
             align-items: center;
+            font-size: 0.75rem;
+            cursor: pointer;
             gap: 3px;
-            padding: 8px 0;
-            transition: 0.2s;
-        }
-
-        .nav-btn span.icon {
-            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: color 0.2s;
         }
 
         .nav-btn.active {
-            color: var(--f1-turquesa);
+            color: var(--color-turquoise);
         }
 
-        .app-download-mini {
-            background: #101317;
-            border: 1px solid #3e444d;
-            padding: 12px 15px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-        .app-download-mini p {
-            font-size: 0.75em;
-            color: #ccc;
-            margin: 0;
-            line-height: 1.3;
+        .nav-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
         }
 
-        .sub-tab-container {
+        /* Reglamento & PayPal */
+        .rules-list {
+            padding-left: 1.2rem;
             display: flex;
-            gap: 5px;
-            margin-bottom: 15px;
+            flex-direction: column;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
         }
-        .sub-tab-btn {
-            flex: 1;
-            padding: 10px;
-            background: #101317;
-            border: 1px solid #3e444d;
-            color: #aaa;
-            font-size: 0.8em;
+
+        .paypal-box {
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-paypal {
+            display: inline-block;
+            background: linear-gradient(to bottom, #0079C1, #00457C);
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
             font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
-        }
-        .sub-tab-btn.active {
-            background: var(--f1-turquesa);
-            color: #000;
-            border-color: var(--f1-turquesa);
+            font-size: 0.95rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: opacity 0.2s;
+            margin-top: 0.5rem;
         }
 
-        .hidden { display: none !important; }
-
-        .sprint-accordion {
-            background: #101317;
-            border: 1px dashed var(--f1-papaya);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
+        .btn-paypal:hover {
+            opacity: 0.9;
         }
 
-        .status-msg {
-            font-size: 0.85em;
-            padding: 10px;
-            border-radius: 6px;
-            margin-top: 10px;
-            text-align: center;
+        @media (max-width: 768px) {
+            .navbar { padding: 0.75rem 1rem; }
+            .container { padding: 1rem; }
         }
-        .status-success { background: rgba(0, 210, 190, 0.15); color: var(--f1-turquesa); border: 1px solid var(--f1-turquesa); }
-        .status-error { background: rgba(255, 77, 77, 0.15); color: var(--danger); border: 1px solid var(--danger); }
     </style>
 </head>
 <body>
 
-    <header class="app-header-full">
-        <div class="header-title-container">
-            <h1 class="app-title">Podium FantasyF1</h1>
-            <p class="app-subtitle">EFEH Tech Systems</p>
+    <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            PODIUM FANTASY F1
+            <span>EfEH tech Systems</span>
         </div>
-        <button class="profile-icon-btn" onclick="switchDashboardTab('account')" title="Mi Cuenta">
-            👤
-        </button>
-    </header>
+        <div id="navUserArea" class="user-info-nav hidden">
+            <span id="userEmailDisplay">usuario@dominio.com</span>
+            <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
+        </div>
+    </nav>
 
-    <div class="container">
-
-        <!-- VISTA DE AUTENTICACIÓN / PESTAÑAS CLARAS DE LOGIN Y REGISTRO -->
-        <div id="authView" class="card-box">
-            
-            <!-- Pestañas Superiores Visibles -->
-            <div class="sub-tab-container">
-                <button class="sub-tab-btn active" id="tabLoginBtn" onclick="cambiarModoAuth('login')">Iniciar Sesión</button>
-                <button class="sub-tab-btn" id="tabRegisterBtn" onclick="cambiarModoAuth('register')">Registrarse</button>
+    <!-- 1. VISTA DE AUTENTICACIÓN (LOGIN / REGISTRO) -->
+    <div id="authView" class="container">
+        <div class="auth-card">
+            <div class="auth-tabs">
+                <button id="tabLoginBtn" class="auth-tab-btn active" onclick="cambiarModoAuth('login')">Iniciar Sesión</button>
+                <button id="tabRegisterBtn" class="auth-tab-btn" onclick="cambiarModoAuth('register')">Registrarse</button>
             </div>
 
-            <!-- FORMULARIO DE INICIO DE SESIÓN -->
+            <!-- Formulario de Login -->
             <form id="formLogin" onsubmit="procesarLogin(event)">
-                <h3>Acceso de Usuario</h3>
-                <label>email</label>
-                <input type="email" id="loginEmail" placeholder="usuario@dominio.com" required>
-
-                <label>Contraseña</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" required>
-
-                <button type="submit" class="btn-action" style="margin-top: 10px;">Entrar</button>
-            </form>
-
-            <!-- FORMULARIO DE REGISTRO COMPLETO (VISIBLE AL SELECCIONAR LA PESTAÑA) -->
-            <form id="formRegister" class="hidden" onsubmit="procesarRegistro(event)">
-                <h3>Crear Nueva Cuenta</h3>
-
-                  <label>email</label>
-                <input type="email" id="reg-email" placeholder="usuario@dominio.com" required>
-
-                <label>Contraseña</label>
-                <input type="password" id="reg-password" placeholder="••••••••" required>
-
-                <label>Confirmar Contraseña</label>
-                <input type="password" id="reg-password-confirm" placeholder="Repite tu contraseña" required>
-
-<label>País de Origen</label>
-<select id="reg-pais" required>
-    <option value="">Selecciona tu país</option>
-    <!-- Iberoamérica y América -->
-    <option value="AR">🇦🇷 Argentina</option>
-    <option value="BZ">🇧🇿 Belice</option>
-    <option value="BO">🇧🇴 Bolivia</option>
-    <option value="BR">🇧🇷 Brasil</option>
-    <option value="CA">🇨🇦 Canadá</option>
-    <option value="CL">🇨🇱 Chile</option>
-    <option value="CO">🇨🇴 Colombia</option>
-    <option value="CR">🇨🇷 Costa Rica</option>
-    <option value="CU">🇨🇺 Cuba</option>
-    <option value="DO">🇩🇴 Rep. Dominicana</option>
-    <option value="EC">🇪🇨 Ecuador</option>
-    <option value="SV">🇸🇻 El Salvador</option>
-    <option value="ES">🇪🇸 España</option>
-    <option value="GT">🇬🇹 Guatemala</option>
-    <option value="GY">🇬🇾 Guyana</option>
-    <option value="HT">🇭🇹 Haití</option>
-    <option value="HN">🇭🇳 Honduras</option>
-    <option value="JM">🇯🇲 Jamaica</option>
-    <option value="MX">🇲🇽 México</option>
-    <option value="NI">🇳🇮 Nicaragua</option>
-    <option value="PA">🇵🇦 Panamá</option>
-    <option value="PY">🇵🇾 Paraguay</option>
-    <option value="PE">🇵🇪 Perú</option>
-    <option value="PT">🇵🇹 Portugal</option>
-	<option value="PR">🇵🇷 Puerto Rico</option>
-    <option value="SR">🇸🇷 Surinam</option>
-    <option value="US">🇺🇸 Estados Unidos</option>
-    <option value="UY">🇺🇾 Uruguay</option>
-    <option value="VE">🇻🇪 Venezuela</option>
-</select>
-
-                <button type="submit" class="btn-action btn-turquesa" style="margin-top: 10px;">Registrarse</button>
-            </form>
-
-            <div id="authFeedback" class="hidden"></div>
-        </div>
-
-        <!-- DASHBOARD PRINCIPAL -->
-        <div id="dashboardView" class="hidden" style="display: flex; flex-direction: column; gap: 15px;">
-            
-            <!-- 1. DASHBOARD / PREDICCIONES -->
-            <div id="tabHome" class="dashboard-tab" style="display: flex; flex-direction: column; gap: 15px;">
-                
-                <div class="app-download-mini">
-                    <p>Lleva el Fantasy en tu móvil Android.</p>
-                    <a href="#" class="btn-action btn-turquesa" style="width: auto; padding: 8px 12px; font-size: 0.75em;">
-                        APK ⚡
-                    </a>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" class="form-control" placeholder="usuario@dominio.com" required>
                 </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-action">Entrar</button>
+            </form>
 
-                <div class="card-box">
-                    <h3>Mi Predicción</h3>
-                    
-                    <label>Seleccionar Gran Premio</label>
-                    <select id="raceSelect" onchange="actualizarModalidadGranPremio()">
+            <!-- Formulario de Registro -->
+            <form id="formRegister" class="hidden" onsubmit="procesarRegistro(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="reg-email" class="form-control" placeholder="usuario@dominio.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="reg-password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirmar Contraseña</label>
+                    <input type="password" id="reg-password-confirm" class="form-control" placeholder="Repite tu contraseña" required>
+                </div>
+                <div class="form-group">
+                    <label>País de Origen</label>
+                    <select id="reg-pais" class="form-control" required>
+                        <option value="">Selecciona tu país</option>
+                        <option value="AR">🇦🇷 Argentina</option>
+                        <option value="BO">🇧🇴 Bolivia</option>
+                        <option value="BR">🇧🇷 Brasil</option>
+                        <option value="CL">🇨🇱 Chile</option>
+                        <option value="CO">🇨🇴 Colombia</option>
+                        <option value="CR">🇨🇷 Costa Rica</option>
+                        <option value="EC">🇪🇨 Ecuador</option>
+                        <option value="ES">🇪🇸 España</option>
+                        <option value="MX">🇲🇽 México</option>
+                        <option value="PA">🇵🇦 Panamá</option>
+                        <option value="PE">🇵🇪 Perú</option>
+                        <option value="US">🇺🇸 Estados Unidos</option>
+                        <option value="UY">🇺🇾 Uruguay</option>
+                        <option value="VE">🇻🇪 Venezuela</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-action btn-turquesa">Crear Cuenta</button>
+            </form>
+
+            <div id="authFeedback" class="status-msg hidden"></div>
+        </div>
+    </div>
+
+    <!-- 2. VISTA PRINCIPAL DEL DASHBOARD Y APLICACIÓN -->
+    <div id="dashboardView" class="container hidden">
+
+        <!-- SECCIÓN 1: DASHBOARD / PREDICCIONES -->
+        <div id="tabHome" class="dashboard-tab">
+            <div class="dashboard-header">
+                <h1>Panel de Predicciones F1</h1>
+                <p>Selecciona tu Gran Premio y fija tus pronósticos oficiales para la temporada</p>
+            </div>
+
+            <div class="card-box">
+                <h2>Selección de Gran Premio</h2>
+                <div class="form-group">
+                    <label>Gran Premio</label>
+                    <select id="raceSelect" class="form-control" onchange="actualizarModalidadGranPremio()">
                         <option value="">Cargando calendario...</option>
                     </select>
+                </div>
 
-                    <label>Piloto Pole Position</label>
-                    <select id="poleSelect" class="pole-select">
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Piloto Pole Position (Poleman)</label>
+                    <select id="poleSelect" class="form-control">
                         <option value="">Selecciona Poleman</option>
                     </select>
+                </div>
+            </div>
 
-                    <!-- SECCIÓN SPRINT -->
-                    <div id="sprintSection" class="sprint-accordion hidden">
-                        <h4 style="color: var(--f1-papaya); margin: 0 0 8px 0; font-size: 0.85em; text-transform: uppercase;">🏁 Sprint (Top 3)</h4>
-                        <label>1° Puesto Sprint</label>
-                        <select class="driver-select sprint-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
-                        <label>2° Puesto Sprint</label>
-                        <select class="driver-select sprint-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
-                        <label>3° Puesto Sprint</label>
-                        <select class="driver-select sprint-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+            <!-- Sección Sprint (condicional) -->
+            <div id="sprintSection" class="card-box hidden">
+                <h2 style="color: var(--color-papaya);">Carrera Sprint (Top 3)</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label>1° Sprint</label>
+                        <select class="form-control driver-select sprint-slot"><option value="">Selecciona piloto</option></select>
                     </div>
+                    <div class="form-group">
+                        <label>2° Sprint</label>
+                        <select class="form-control driver-select sprint-slot"><option value="">Selecciona piloto</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>3° Sprint</label>
+                        <select class="form-control driver-select sprint-slot"><option value="">Selecciona piloto</option></select>
+                    </div>
+                </div>
+            </div>
 
-                    <!-- CARRERA LARGA (TOP 5) -->
-                    <div style="margin-top: 10px;">
-                        <h4 style="color: var(--f1-turquesa); margin: 0 0 8px 0; font-size: 0.85em; text-transform: uppercase;">🏎️ Carrera Larga (Top 5)</h4>
-                        <label>1° Puesto</label>
-                        <select class="driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+            <!-- Carrera Larga (Top 5) -->
+            <div class="card-box">
+                <h2>Carrera Larga (Top 5 - Domingo)</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label>1° Puesto (Ganador)</label>
+                        <select class="form-control driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                    </div>
+                    <div class="form-group">
                         <label>2° Puesto</label>
-                        <select class="driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                        <select class="form-control driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                    </div>
+                    <div class="form-group">
                         <label>3° Puesto</label>
-                        <select class="driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                        <select class="form-control driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                    </div>
+                    <div class="form-group">
                         <label>4° Puesto</label>
-                        <select class="driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                        <select class="form-control driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
+                    </div>
+                    <div class="form-group">
                         <label>5° Puesto</label>
-                        <select class="driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
-                    </div>
-
-                    <button class="btn-action" style="margin-top: 15px;" onclick="guardarPrediccion()">Guardar Predicción</button>
-                    <div id="predictionFeedback" class="hidden"></div>
-                </div>
-            </div>
-
-            <!-- 2. STANDINGS -->
-            <div id="tabStandings" class="dashboard-tab hidden card-box">
-                <h3>Tabla de Posiciones</h3>
-                
-                <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" id="subIndBtn" onclick="switchStandingsSub('individual')">Individual</button>
-                    <button class="sub-tab-btn" id="subEscBtn" onclick="switchStandingsSub('escuderias')">Escuderías</button>
-                </div>
-
-                <div id="subStandingsIndividual">
-                    <p style="font-size: 0.8em; color: #aaa; text-align: center;">Ranking general sincronizado desde base de datos.</p>
-                    <div style="background: #101317; padding: 12px; border-radius: 8px; text-align: center; color: #666; font-size: 0.8em;" id="dbIndividualContainer">
-                        [Cargando registros individuales...]
-                    </div>
-                </div>
-
-                <div id="subStandingsEscuderias" class="hidden">
-                    <p style="font-size: 0.8em; color: #aaa; text-align: center;">Ranking por escuderías sincronizado desde base de datos.</p>
-                    <div style="background: #101317; padding: 12px; border-radius: 8px; text-align: center; color: #666; font-size: 0.8em;" id="dbEscuderiasContainer">
-                        [Cargando registros de escuderías...]
+                        <select class="form-control driver-select race-slot" onchange="verificarDuplicadosCarrera()"><option value="">Selecciona piloto</option></select>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. MI CUENTA -->
-            <div id="tabAccount" class="dashboard-tab hidden card-box" style="text-align: left;">
-                <h3>Mi Cuenta y Puntuación</h3>
-                <div style="background: #101317; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                    <label>Usuario / Correo:</label>
-                    <p id="userEmailDisplay" style="font-size: 0.85em; color: var(--f1-turquesa); margin: 0 0 8px 0;">-</p>
-                    <label>Puntuación Total Acumulada:</label>
-                    <p id="userTotalPoints" style="font-size: 1.2em; font-weight: bold; color: var(--f1-papaya); margin: 0;">0 pts</p>
-                </div>
+            <button type="button" class="btn-action btn-turquesa" onclick="guardarPrediccion()">Guardar Predicción</button>
+            <div id="predictionFeedback" class="status-msg hidden"></div>
+        </div>
 
-                <h4 style="color: var(--f1-turquesa); font-size: 0.85em; text-transform: uppercase; margin-bottom: 6px;">Desglose por Gran Premio</h4>
-                <label>Seleccionar Gran Premio</label>
-                <select id="gpHistorySelect" onchange="cargarDesgloseGPDB()">
-                    <option value="">Selecciona un GP para consultar</option>
-                </select>
-
-                <div id="gpBreakdownBox" style="background: #101317; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.8em; color: #ccc;">
-                    <p style="text-align: center; color: #666; margin: 0;">Selecciona un Gran Premio para consultar el desglose directamente desde las tablas.</p>
-                </div>
-
-                <button class="btn-action" style="background: var(--danger); color: white; margin-top: 15px;" onclick="cerrarSesion()">Cerrar Sesión</button>
+        <!-- SECCIÓN 2: STANDINGS (TABLA DE POSICIONES) -->
+        <div id="tabStandings" class="dashboard-tab hidden">
+            <div class="dashboard-header">
+                <h1>Tabla de Posiciones</h1>
+                <p>Ranking general sincronizado desde base de datos Supabase</p>
             </div>
 
-            <!-- 4. Info -->
-            <div id="tabInfo" class="dashboard-tab hidden card-box" style="text-align: left;">
-                <h3>Reglamento de Puntuación</h3>
-                <p style="font-size: 0.8em; line-height: 1.5; color: #cccccc; margin-bottom: 15px;">
-                    <strong>1.</strong> 5 pts por acertar el Pole Man.<br>
-                    <strong>2.</strong> 5 pts por acertar la vuelta rápida. <em>(No válido actualmente)</em><br>
-                    <strong>3.</strong> Podio de ganadores: Tripleta perfecta suman puntos triples (acertar el orden del podio).<br>
-                    <strong>4.</strong> 5 pilotos máximo por carrera (aplicará el puntaje que obtengan los pilotos en carrera).<br>
-                    <strong>5.</strong> En cada carrera se puede variar de pilotos hasta finalizar la FP3 de cada Gran Premio.<br>
-                    <strong>6.</strong> Puntos dobles para el que acierte la posición de un piloto en grilla (Solo hasta el 5° puesto).
-                </p>
-                <hr style="border: 0; border-top: 1px solid #3e444d; margin: 15px 0;">
-                <h3 style="color: var(--f1-papaya);">Apoya el Proyecto Podium FantasyF1</h3>
-                <p style="font-size: 0.75em; color: #bbb; margin-bottom: 10px; text-align: center;">Ayuda a mantener la infraestructura de EFEH Tech activa.</p>
-                <a href="https://paypal.me/3lvisfeh" target="_blank" class="btn-action" style="background: #00457c; color: white; padding: 10px; font-size: 0.8em;">
-                    💙 Donar con PayPal 💙
-                </a>
+            <div class="subtabs">
+                <button id="subIndBtn" class="subtab-btn active" onclick="switchStandingsSub('individual')">Individual</button>
+                <button id="subEscBtn" class="subtab-btn" onclick="switchStandingsSub('escuderias')">Escuderías</button>
             </div>
 
+            <div class="card-box">
+                <div id="subStandingsIndividual" class="table-container">
+                    <p class="text-center" style="color: var(--color-turquoise);">Cargando ranking individual...</p>
+                </div>
+                <div id="subStandingsEscuderias" class="table-container hidden">
+                    <p class="text-center" style="color: var(--text-muted);">Próximamente disponible el ranking por escuderías.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: MI CUENTA / DESGLOSE DE PUNTOS -->
+        <div id="tabAccount" class="dashboard-tab hidden">
+            <div class="dashboard-header">
+                <h1 id="accountGpTitle">Gran Premio Actual</h1>
+                <p>Resumen de rendimiento y desglose de puntuación por sesión</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card turquoise">
+                    <h3>Total Fin de Semana</h3>
+                    <div class="value" id="statWeekendPts">0 Pts</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Puntos en la General</h3>
+                    <div class="value" id="statGlobalPts">0 Pts</div>
+                </div>
+                <div class="stat-card turquoise">
+                    <h3>Posición en Liga</h3>
+                    <div class="value" id="statLeaguePos">--</div>
+                </div>
+            </div>
+
+            <div class="card-box">
+                <h2>Desglose de Puntuación</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fase / Sesión</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-right">Puntos Obt.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Qualy (Clasificación)</td>
+                                <td class="text-center"><span class="badge">Completado</span></td>
+                                <td class="text-right" style="color: var(--color-turquoise);">--</td>
+                            </tr>
+                            <tr>
+                                <td>Sprint (Formato Corto)</td>
+                                <td class="text-center"><span class="badge" style="background-color: var(--color-papaya);">N/A</span></td>
+                                <td class="text-right">0 Pts</td>
+                            </tr>
+                            <tr>
+                                <td>Carrera Principal (Domingo)</td>
+                                <td class="text-center"><span class="badge">Completado</span></td>
+                                <td class="text-right" style="color: var(--color-turquoise);">--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 4: REGLAMENTO & PAYPAL -->
+        <div id="tabInfo" class="dashboard-tab hidden">
+            <div class="dashboard-header">
+                <h1>Información y Reglamento</h1>
+                <p>Normas oficiales de puntuación y colaboración del proyecto</p>
+            </div>
+
+            <div class="card-box">
+                <h2>Reglamento de Puntuación</h2>
+                <ol class="rules-list">
+                    <li><strong>5 pts</strong> por acertar el Pole Man.</li>
+                    <li><strong>5 pts</strong> por acertar la vuelta rápida. (No válido actualmente).</li>
+                    <li><strong>Podio de ganadores:</strong> Tripleta perfecta suman puntos triples (acertar el orden exacto del podio).</li>
+                    <li><strong>Top 5 en carrera:</strong> Se aplicará el puntaje obtenido por los pilotos en carrera oficial.</li>
+                    <li><strong>Plazo de modificación:</strong> En cada carrera se puede variar de pilotos hasta finalizar la FP3 de cada Gran Premio.</li>
+                    <li><strong>Puntos dobles:</strong> Para el que acierte la posición exacta de un piloto en grilla (Solo hasta el 5° puesto).</li>
+                </ol>
+
+                <div class="paypal-box">
+                    <h3 style="color: var(--color-papaya); font-size: 1rem; margin-bottom: 0.3rem;">APOYA EL PROYECTO PODIUM FANTASY F1</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Ayuda a mantener la infraestructura de EfEH Tech activa.</p>
+                    <a href="https://paypal.me" target="_blank" class="btn-paypal">♥ Donar con PayPal ♥</a>
+                </div>
+            </div>
         </div>
 
     </div>
 
-    <nav class="nav-bar-bottom hidden" id="bottomNavBar">
-        <button class="nav-btn active" id="navHomeBtn" onclick="switchDashboardTab('home')">
-            <span class="icon">🏎️</span> Dashboard
+    <!-- BARRA DE NAVEGACIÓN INFERIOR (MÓVIL / APP) -->
+    <nav id="bottomNavBar" class="bottom-nav hidden">
+        <button id="navHomeBtn" class="nav-btn active" onclick="switchDashboardTab('home')">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            Dashboard
         </button>
-        <button class="nav-btn" id="navStandingsBtn" onclick="switchDashboardTab('standings')">
-            <span class="icon">📊</span> Standings
+        <button id="navStandingsBtn" class="nav-btn" onclick="switchDashboardTab('standings')">
+            <svg viewBox="0 0 24 24"><path d="M16 11V3H8v8H2v10h20V11h-6zm-6-6h4v14h-4V5zm-6 8h4v6H4v-6zm16 6h-4v-6h4v6z"/></svg>
+            Standings
         </button>
-        <button class="nav-btn" id="navAccountBtn" onclick="switchDashboardTab('account')">
-            <span class="icon">👤</span> Mi Cuenta
+        <button id="navAccountBtn" class="nav-btn" onclick="switchDashboardTab('account')">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            Mi Cuenta
         </button>
-        <button class="nav-btn" id="navInfoBtn" onclick="switchDashboardTab('info')">
-            <span class="icon">📜</span> Info
+        <button id="navInfoBtn" class="nav-btn" onclick="switchDashboardTab('info')">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            Reglamento
         </button>
     </nav>
 
-<script>
+    <script>
+        // CONFIGURACIÓN SUPABASE (Reemplaza con tus credenciales reales)
+        const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
+        const SUPABASE_ANON_KEY = 'tu-anon-key';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         let driversList = [];
+        let calendarData = [];
         let usuarioActual = null;
         let userIdActual = null;
-        let calendarData = [];
 
         async function inicializarApp() {
             await cargarPilotos2026();
@@ -511,18 +698,38 @@
             await cargarStandingsIndividuales();
         }
 
-       async function cargarPilotos2026() {
-    try {
-        const { data, error } = await supabaseClient
-            .from('drivers2026')
-            .select('*');
-        if (error) throw error;
-        driversList = data;
-        poblarSelectoresPilotos();
-    } catch (e) {
-        console.error("Error cargando pilotos desde Supabase:", e);
-    }
-}
+        async function cargarPilotos2026() {
+            try {
+                const response = await fetch('./drivers.json');
+                driversList = await response.json();
+            } catch (e) {
+                driversList = [
+                    { code: 'VER', name: 'Max Verstappen', team: 'Red Bull Racing' },
+                    { code: 'HAD', name: 'Isack Hadjar', team: 'Red Bull Racing' },
+                    { code: 'LEC', name: 'Charles Leclerc', team: 'Ferrari' },
+                    { code: 'HAM', name: 'Lewis Hamilton', team: 'Ferrari' },
+                    { code: 'NOR', name: 'Lando Norris', team: 'McLaren' },
+                    { code: 'PIA', name: 'Oscar Piastri', team: 'McLaren' },
+                    { code: 'RUS', name: 'George Russell', team: 'Mercedes' },
+                    { code: 'ANT', name: 'Kimi Antonelli', team: 'Mercedes' },
+                    { code: 'ALO', name: 'Fernando Alonso', team: 'Aston Martin' },
+                    { code: 'STR', name: 'Lance Stroll', team: 'Aston Martin' },
+                    { code: 'GAS', name: 'Pierre Gasly', team: 'Alpine' },
+                    { code: 'COL', name: 'Franco Colapinto', team: 'Alpine' },
+                    { code: 'OCO', name: 'Esteban Ocon', team: 'Haas F1 Team' },
+                    { code: 'BEA', name: 'Oliver Bearman', team: 'Haas F1 Team' },
+                    { code: 'LAW', name: 'Liam Lawson', team: 'Racing Bulls' },
+                    { code: 'LIN', name: 'Arvid Lindblad', team: 'Racing Bulls' },
+                    { code: 'SAI', name: 'Carlos Sainz', team: 'Williams' },
+                    { code: 'ALB', name: 'Alexander Albon', team: 'Williams' },
+                    { code: 'HUL', name: 'Nico Hülkenberg', team: 'Audi' },
+                    { code: 'BOR', name: 'Gabriel Bortoleto', team: 'Audi' },
+                    { code: 'PER', name: 'Sergio Pérez', team: 'Cadillac F1 Team' },
+                    { code: 'BOT', name: 'Valtteri Bottas', team: 'Cadillac F1 Team' }
+                ];
+            }
+            poblarSelectoresPilotos();
+        }
 
         function poblarSelectoresPilotos() {
             const poleSelect = document.getElementById('poleSelect');
@@ -551,31 +758,14 @@
         }
 
         function verificarDuplicadosCarrera() {
-            // 1. Validar duplicados internamente en los slots de Sprint de forma independiente
-            const sprintSlots = document.querySelectorAll('.sprint-slot');
-            const selectedSprintCodes = Array.from(sprintSlots).map(s => s.value).filter(v => v !== "");
-
-            sprintSlots.forEach(select => {
-                const currentValue = select.value;
-                Array.from(select.options).forEach(option => {
-                    if (option.value === "") return;
-                    if (selectedSprintCodes.includes(option.value) && option.value !== currentValue) {
-                        option.disabled = true;
-                    } else {
-                        option.disabled = false;
-                    }
-                });
-            });
-
-            // 2. Validar duplicados internamente en los slots de Carrera Larga de forma independiente
             const raceSlots = document.querySelectorAll('.race-slot');
-            const selectedRaceCodes = Array.from(raceSlots).map(s => s.value).filter(v => v !== "");
+            const selectedCodes = Array.from(raceSlots).map(s => s.value).filter(v => v !== "");
 
             raceSlots.forEach(select => {
                 const currentValue = select.value;
                 Array.from(select.options).forEach(option => {
                     if (option.value === "") return;
-                    if (selectedRaceCodes.includes(option.value) && option.value !== currentValue) {
+                    if (selectedCodes.includes(option.value) && option.value !== currentValue) {
                         option.disabled = true;
                     } else {
                         option.disabled = false;
@@ -584,7 +774,6 @@
             });
         }
 
-        // Cambio visual limpio entre pestañas de Login y Registro
         function cambiarModoAuth(modo) {
             const btnLogin = document.getElementById('tabLoginBtn');
             const btnRegister = document.getElementById('tabRegisterBtn');
@@ -606,7 +795,6 @@
             }
         }
 
-        // Lógica de Registro con corrección: supabaseClient
         async function procesarRegistro(event) {
             event.preventDefault();
             const email = document.getElementById('reg-email').value;
@@ -617,45 +805,28 @@
             feedback.className = "hidden";
 
             try {
-                if (password !== passwordConfirm) {
-                    throw new Error("Las contraseñas no coinciden.");
-                }
+                if (password !== passwordConfirm) throw new Error("Las contraseñas no coinciden.");
 
-                // CORRECCIÓN AQUÍ: Usar supabaseClient
-                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-                    email: email,
-                    password: password
-                });
+                const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
                 if (authError) throw authError;
 
                 userIdActual = authData.user ? authData.user.id : null;
                 const usernameProvisional = email.split('@')[0];
 
-                // CORRECCIÓN AQUÍ: Usar supabaseClient
-                const { error: profileError } = await supabaseClient
+                const { error: profileError } = await supabase
                     .from('usuarios')
-                    .insert([
-                        {
-                            id: userIdActual,
-                            username: usernameProvisional,
-                            pais: pais,
-                            idioma_preferido: 'es',
-                            puntos_globales: 0,
-                            escuderia_id: null
-                        }
-                    ]);
-                if (profileError) throw profileError;
+                    .insert([{ id: userIdActual, username: usernameProvisional, pais: pais, puntos_globales: 0 }]);
+                
+                if (profileError) console.warn("Perfil ya existe o requiere sincronización:", profileError.message);
 
                 usuarioActual = email;
-                alert("¡Registro exitoso, socio!");
                 entrarAlSistema(email);
-
             } catch (err) {
                 feedback.textContent = "Error en el registro: " + err.message;
                 feedback.className = "status-msg status-error";
             }
         }
-        // Lógica de Inicio de Sesión con corrección: supabaseClient
+
         async function procesarLogin(event) {
             event.preventDefault();
             const email = document.getElementById('loginEmail').value;
@@ -664,30 +835,34 @@
             feedback.className = "hidden";
 
             try {
-                // CORRECCIÓN AQUÍ: Usar supabaseClient
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
 
                 userIdActual = data.user ? data.user.id : null;
                 usuarioActual = email;
                 entrarAlSistema(email);
-
             } catch (err) {
                 feedback.textContent = "Error al iniciar sesión: " + err.message;
                 feedback.className = "status-msg status-error";
             }
         }
 
+        function entrarAlSistema(email) {
+            document.getElementById('userEmailDisplay').innerText = email;
+            document.getElementById('authView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.remove('hidden');
+            document.getElementById('bottomNavBar').classList.remove('hidden');
+            document.getElementById('navUserArea').classList.remove('hidden');
+            inicializarApp();
+        }
+
         function cerrarSesion() {
             usuarioActual = null;
             userIdActual = null;
-            // CORRECCIÓN AQUÍ: Usar supabaseClient
-            supabaseClient.auth.signOut();
+            supabase.auth.signOut();
             document.getElementById('dashboardView').classList.add('hidden');
             document.getElementById('bottomNavBar').classList.add('hidden');
+            document.getElementById('navUserArea').classList.add('hidden');
             document.getElementById('authView').classList.remove('hidden');
             cambiarModoAuth('login');
         }
@@ -730,10 +905,11 @@
         }
 
         async function cargarStandingsIndividuales() {
-            const container = document.getElementById('dbIndividualContainer');
+            const container = document.getElementById('subStandingsIndividual');
+            container.innerHTML = '<p style="color: var(--color-turquoise); text-align: center;">Cargando ranking desde Supabase...</p>';
+
             try {
-                // CORRECCIÓN AQUÍ: Usar supabaseClient
-                const { data: usuarios, error } = await supabaseClient
+                const { data: usuarios, error } = await supabase
                     .from('usuarios')
                     .select('username, pais, puntos_globales')
                     .order('puntos_globales', { ascending: false });
@@ -741,61 +917,49 @@
                 if (error) throw error;
 
                 if (!usuarios || usuarios.length === 0) {
-                    container.innerHTML = '<p style="color: #aaa; text-align: center; margin: 0;">No hay usuarios registrados todavía.</p>';
+                    container.innerHTML = '<p style="color: #aaa; text-align: center;">No hay usuarios registrados todavía.</p>';
                     return;
                 }
 
-                let html = '<table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85em;">';
-                html += '<tr style="border-bottom: 1px solid #3e444d; color: var(--f1-papaya);"><th style="padding: 6px;">Pos</th><th style="padding: 6px;">Usuario</th><th style="padding: 6px;">País</th><th style="padding: 6px; text-align: right;">Puntos</th></tr>';
+                let html = '<table>';
+                html += '<tr><th>Pos</th><th>Usuario</th><th>País</th><th class="text-right">Puntos</th></tr>';
                 
                 usuarios.forEach((u, index) => {
-                    html += `<tr style="border-bottom: 1px solid #252b33;">
-                        <td style="padding: 8px;">#${index + 1}</td>
-                        <td style="padding: 8px; color: var(--white); font-weight: bold;">${u.username || 'Sin apodo'}</td>
-                        <td style="padding: 8px;">${u.pais || '-'}</td>
-                        <td style="padding: 8px; text-align: right; color: var(--f1-turquesa); font-weight: bold;">${u.puntos_globales || 0} pts</td>
+                    html += `<tr>
+                        <td>#${index + 1}</td>
+                        <td style="color: var(--text-main); font-weight: bold;">${u.username || 'Usuario'}</td>
+                        <td>${u.pais || '-'}</td>
+                        <td class="text-right" style="color: var(--color-turquoise); font-weight: bold;">${u.puntos_globales || 0} pts</td>
                     </tr>`;
                 });
                 html += '</table>';
 
                 container.innerHTML = html;
             } catch (err) {
-                container.innerHTML = `<p style="color: var(--danger); text-align: center; margin: 0;">Error al cargar standings: ${err.message}</p>`;
+                container.innerHTML = `<p style="color: var(--danger); text-align: center;">Error al cargar standings: ${err.message}</p>`;
             }
         }
 
         async function cargarCalendario() {
-    try {
-        const { data, error } = await supabaseClient
-            .from('calendario')
-            .select('*')
-            .order('round', { ascending: true });
-        
-        if (error) throw error;
-        calendarData = data;
-        
-        const selectRace = document.getElementById('raceSelect');
-        const historySelect = document.getElementById('gpHistorySelect');
-        
-        selectRace.innerHTML = '<option value="">Selecciona un Gran Premio</option>';
-        historySelect.innerHTML = '<option value="">Selecciona un GP para consultar</option>';
-        
-        calendarData.forEach(race => {
-            const option = document.createElement('option');
-            option.value = race.round;
-            const hasSprint = race.sprint === true || race.isSprint === true;
-            option.dataset.isSprint = hasSprint ? 'true' : 'false';
-            option.dataset.gpName = race.name;
-            option.textContent = `Ronda ${race.round}: ${race.name} (${race.date})`;
-            selectRace.appendChild(option);
-
-            const historyOpt = option.cloneNode(true);
-            historySelect.appendChild(historyOpt);
-        });
-    } catch (error) {
-        console.error("Error al cargar calendario desde Supabase:", error);
-    }
-}
+            try {
+                const response = await fetch('./calendar.json');
+                calendarData = await response.json();
+                const selectRace = document.getElementById('raceSelect');
+                
+                selectRace.innerHTML = '<option value="">Selecciona un Gran Premio</option>';
+                
+                calendarData.forEach(race => {
+                    const option = document.createElement('option');
+                    option.value = race.round;
+                    option.dataset.isSprint = (race.sprint === true || race.isSprint === true) ? 'true' : 'false';
+                    option.dataset.gpName = race.name;
+                    option.textContent = `Ronda ${race.round}: ${race.name} (${race.date})`;
+                    selectRace.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al cargar calendar.json:", error);
+            }
+        }
 
         function actualizarModalidadGranPremio() {
             const selectRace = document.getElementById('raceSelect');
@@ -812,43 +976,6 @@
             verificarDuplicadosCarrera();
         }
 
-        async function cargarDesgloseGPDB() {
-    const historySelect = document.getElementById('gpHistorySelect');
-    const breakdownBox = document.getElementById('gpBreakdownBox');
-    const selectedVal = historySelect.options[historySelect.selectedIndex].dataset.gpName;
-
-    if (!selectedVal || !userIdActual) {
-        breakdownBox.innerHTML = '<p style="text-align: center; color: #666; margin: 0;">Selecciona un Gran Premio para consultar el desglose.</p>';
-        return;
-    }
-
-    try {
-        const { data, error } = await supabaseClient
-            .from('puntuaciones_gp')
-            .select('*')
-            .eq('usuario_id', userIdActual)
-            .eq('gran_premio', selectedVal)
-            .single();
-
-        if (error || !data) {
-            breakdownBox.innerHTML = '<p style="text-align: center; color: #aaa; margin: 0;">Aún no hay puntuaciones registradas para este Gran Premio.</p>';
-            return;
-        }
-
-        breakdownBox.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-                <div style="display: flex; justify-content: space-between;"><span>🏁 Pole Position:</span> <strong style="color: var(--f1-turquesa);">${data.puntos_pole} pts</strong></div>
-                <div style="display: flex; justify-content: space-between;"><span>⚡ Carrera Sprint:</span> <strong style="color: var(--f1-papaya);">${data.puntos_sprint} pts</strong></div>
-                <div style="display: flex; justify-content: space-between;"><span>🏎️ Carrera Larga (Top 5):</span> <strong style="color: var(--f1-turquesa);">${data.puntos_carrera} pts</strong></div>
-                <hr style="border: 0; border-top: 1px solid #3e444d; margin: 6px 0;">
-                <div style="display: flex; justify-content: space-between; font-size: 1.1em;"><span>🏆 Total GP:</span> <strong style="color: var(--f1-papaya);">${data.puntos_total_gp} pts</strong></div>
-            </div>
-        `;
-    } catch (err) {
-        breakdownBox.innerHTML = `<p style="color: var(--danger); text-align: center; margin: 0;">Error al cargar desglose: ${err.message}</p>`;
-    }
-}
-
         async function guardarPrediccion() {
             const feedback = document.getElementById('predictionFeedback');
             const selectRace = document.getElementById('raceSelect');
@@ -863,12 +990,8 @@
             }
 
             const nombreGP = selectedOption.dataset.gpName || selectedOption.textContent;
-
-            const raceSlots = document.querySelectorAll('.race-slot');
-            const racePicks = Array.from(raceSlots).map(s => s.value);
-
-            const sprintSlots = document.querySelectorAll('.sprint-slot');
-            const sprintPicks = Array.from(sprintSlots).map(s => s.value);
+            const racePicks = Array.from(document.querySelectorAll('.race-slot')).map(s => s.value);
+            const sprintPicks = Array.from(document.querySelectorAll('.sprint-slot')).map(s => s.value);
 
             const datosPrediccion = {
                 usuario_id: userIdActual,
@@ -885,35 +1008,19 @@
             };
 
             try {
-			const { data, error } = await supabaseClient
+                const { error } = await supabase
                     .from('predicciones')
                     .upsert([datosPrediccion], { onConflict: 'usuario_id, gran_premio' });
 
                 if (error) throw error;
-                // ... (éxito)
-            } catch (err) { /*...*/ }
+
+                feedback.textContent = "¡Predicción guardada en Supabase con éxito!";
+                feedback.className = "status-msg status-success";
+            } catch (err) {
+                feedback.textContent = "Error al guardar en Supabase: " + err.message;
+                feedback.className = "status-msg status-error";
+            }
         }
-	function entrarAlSistema(email) {
-    // 1. Ocultar la vista de Login/Registro y mostrar el Dashboard
-    document.getElementById('authView').classList.add('hidden');
-    document.getElementById('dashboardView').classList.remove('hidden');
-    document.getElementById('bottomNavBar').classList.remove('hidden');
-
-    // 2. Mostrar el correo del usuario en la pestaña de cuenta
-    const display = document.getElementById('userEmailDisplay');
-    if(display) display.textContent = email;
-
-    // 3. Limpiar los formularios por seguridad
-    document.getElementById('formLogin').reset();
-    document.getElementById('formRegister').reset();
-
-    // 4. Asegurarnos de iniciar en la pestaña 'home'
-    switchDashboardTab('home');
-}
-	// Disparador automático al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
-    inicializarApp();
-});
     </script>
 </body>
 </html>
